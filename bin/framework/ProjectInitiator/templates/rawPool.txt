@@ -1,0 +1,22 @@
+// this is the pool connection file. This will be use across any database queries
+require('dotenv').config();
+const mysql = require('mysql2/promise');
+
+let mysql_host = process.env.MYSQLHOST;
+let mysql_user = process.env.MYSQLUSER;
+let mysql_password = process.env.MYSQLPASSWORD;
+let mysql_database = process.env.MYSQLDATABASE;
+let mysql_port = Number(process.env.MYSQLPORT);
+let timeout = Number(process.env.CONNECTIONTIMEOUT);
+
+const db_conn = mysql.createPool({
+    host: mysql_host,
+    user: mysql_user,
+    password: mysql_password,
+    database: mysql_database,
+    port: mysql_port,
+    multipleStatements: true,
+    connectTimeout: timeout
+});
+
+module.exports = db_conn;

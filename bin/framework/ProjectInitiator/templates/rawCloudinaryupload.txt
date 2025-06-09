@@ -1,0 +1,59 @@
+// this is cloudinary uploader application
+// Feel free to modify here to suits your needs
+
+// How this work:
+// 1. You need to have a cloudinary account
+// 2. You need the credentials to upload (refer to your the .env)
+// 3. This script has fallback mechanism - if you have cloudinary account, set the correct credentials, and connected to the internet,
+//    it upload to your cloudinary, otherwise, the uploads will end up on the "uploads" folder. Best for local storage, but when on production,
+//    it is highly recommend to have an account on cloudinary for online storage.
+
+
+const cloudinary = require('cloudinary').v2;
+const path = require('path');
+const fs = require('fs');
+require('dotenv').config();
+let port = Number(process.env.PORT);
+
+const localUploadPath = path.join(__dirname, '../uploads');
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const cloudinaryUpload = async (filePath, folder = 'fallback') => {
+    try {
+        const result = await cloudinary.uploader.upload(filePath, {
+            folder: folder,
+            public_id: Date.now(),
+            resource_type: 'auto'
+        });
+
+        fs.unlinkSync(filePath);
+
+        return {
+            success: true,
+            url: result.secure_url,
+            provider: 'cloudinary',
+        };
+    } catch (err) {
+        console.warn('[WARN] Cloudinary upload failed. Saving locally...', err.message);
+
+        const fileName = path.basename(filePath);
+        const fallbackPath = path.join(localUploadPath, fileName);
+
+        if (!fs.existsSync(localUploadPath)) fs.mkdirSync(localUploadPath, { recursive: true });
+
+        fs.renameSync(filePath, fallbackPath);
+
+        return {
+            success: false,
+            url: `http://localhost:${port}/uploads/${fileName}`,
+            provider: 'local',
+        };
+    }
+};
+
+module.exports = { cloudinaryUpload };

@@ -1,0 +1,29 @@
+#### This is your .env files where credentials will be store
+#### Do not include this to push to production or pushing to github
+#### Do not alter anything to avoid unexpected errors in reading your .env file
+#### You may add more credentials, but ensure that they are properly loaded to you scripts
+
+# MYSQL
+MYSQLHOST='0.0.0.0'
+MYSQLUSER="root"
+MYSQLPASSWORD=""
+MYSQLDATABASE="expressivejs"
+PORT=3000
+MYSQLPORT=3306
+SERVERHOST = '0.0.0.0'
+CONNECTIONTIMEOUT=60000
+
+# Cloudinary credentials
+CLOUDINARY_CLOUD_NAME=''
+CLOUDINARY_API_KEY=''
+CLOUDINARY_API_SECRET=''
+FOLDER=''
+
+# Gmail sender credentials
+EMAIL_SENDER=''
+EMAIL_SENDER_PASSWORD=''
+
+# Keys
+API_KEY=''
+JWT_TOKEN=''
+PUBLIC_API_KEY=''

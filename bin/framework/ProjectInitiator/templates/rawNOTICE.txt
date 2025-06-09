@@ -1,0 +1,14 @@
+Welcome to ExpressiveJS!
+
+- To the one who will use this framework:
+     - This is a open-source framework, you can use it for free, and modify them as you like, based on the license issued for this software (MIT license).
+     - If there are bugs or issues found, please report them to the developer.
+     - 
+     - When deploying your application, please inspect your package.json file and remove the "devDependencies" section, as it is not needed in production. 
+       also the "dev" in the "scripts":
+       /* existing configs*/
+       "scripts": {
+            "start":'node App.js',
+            "dev":"nodemon App.js",
+            "build": "npm build"
+       }

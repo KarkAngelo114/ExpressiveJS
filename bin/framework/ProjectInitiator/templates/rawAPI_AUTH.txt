@@ -1,0 +1,19 @@
+// This is your API_Auth checker middleware. The code below is just a basic logic implementation.
+// You can add your own logic here
+
+require('dotenv').config();
+const key = process.env.API_KEY;
+
+const AUTH = async (req, res, next ) => {
+    
+    const client = '';
+
+    if (key === client) {
+        next();
+    }
+    else {
+        return res.status(403).send("FORBIDDEN");
+    }
+};
+
+module.exports = AUTH;

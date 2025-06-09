@@ -1,0 +1,34 @@
+require('dotenv').config();
+const session = require('express-session');
+const MySQL_session_store = require('express-mysql-session')(session);
+let session_key = process.env.PUBLIC_API_KEY;
+
+const sessionStore = new MySQL_session_store({
+    host: process.env.MYSQLHOST,
+    user: process.env.MYSQLUSER,
+    password: process.env.MYSQLPASSWORD,
+    database: process.env.MYSQLDATABASE,
+    port: Number(process.env.MYSQLPORT),
+    schema: {
+        table: 'sessions',
+        columnNames: {
+            session_id: 'Session_ID',
+            expires: 'Expires',
+            data: 'data'
+        } 
+    }
+});
+
+const sessionCreate = session({
+    secret: session_key || 'this_is_so_secret_123',
+    store: sessionStore,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        secure: false, // By default, this is set to false on local development upon setting up ExpressiveJS. Set this to true on production environment.
+        maxAge: 10 * 365 * 24 * 60 * 60 * 1000 // 10 years is set by default
+    }
+});
+
+module.exports = sessionCreate; 

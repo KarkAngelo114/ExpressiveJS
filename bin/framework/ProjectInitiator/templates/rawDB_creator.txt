@@ -1,0 +1,17 @@
+// This is an auto created file. DO NOT DELETE/EDIT/MODIFY THIS
+
+
+const Querex = require('./MySQL/Querex');
+
+const onCreate = async () => {
+    try {
+        await Querex.createDatabase();
+    }
+    catch (error) {
+        console.error('[X]-------Failed to create database:', error);
+    }
+};
+
+module.exports = {
+    onCreate
+}

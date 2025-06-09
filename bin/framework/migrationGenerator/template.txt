@@ -1,0 +1,18 @@
+// This is the migration file
+// To use this file, create a callable function that performs table creation and export that callable function 
+// in the "module.exports = {};"
+// to create SQL query, you can do your own query logic using async/await, otherwise you can use Querex query builder
+
+const db_conn = require('../MySQL/pool');
+const Querex = require('../MySQL/Querex');
+
+// do some stuffs here
+
+// example:
+// const createMyTable = asyn () => {
+//        Querex.createTable('my_table', ["UserID VARCHAR{255) PRIMARY_KEY", "Username VARCHAR(255)", . . . .]);
+// }
+
+module.exports = {
+// export your function here
+};

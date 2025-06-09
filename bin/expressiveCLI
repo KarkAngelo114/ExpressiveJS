@@ -1,0 +1,52 @@
+// This is the expressive CLI
+const color = require('./framework/colorCode/ANSI');
+const createMigrationFile = require('./framework/migrationGenerator/migrationFileGenerator');
+const generateControllerFile = require('./framework/controllerGenerator/controllerGenerator');
+const createModel = require('./framework/modelGenerator/modelFileGenerator');
+const generateRouteFile = require('./framework/routerGenerator/routeFileGenerator');
+const { init } = require('./framework/ProjectInitiator/initiate');
+const { serve } = require('./framework/serve_app/serveJS');
+
+const argument = process.argv.slice(2);
+const command = argument[0];
+const filename = argument[1];
+
+let commandsName = {
+    " generate-migration: <your_file_name> ":" --allows you to generate a migration file",
+    " generate-controller: <your_file_name>":" --allows you to generate a controller file",
+    " generate-model: <your_file_name>":" --allows you to generate a model file",
+    " generate-route: <your_file_name>":" --allows you to generate a route file",
+    " initiate-setup":" --initiates the entire ExpressiveJS framework setup (executes once)",
+    " --help ":" --shows you list of commands available in expressiveCLI",
+    " --serve": " -- starts the App"
+};
+
+if (command === "--help") {
+    console.log(`\n${color.yellow}============${color.default_color} expressiveCLI commands ${color.yellow}============${color.default_color}\n`);
+    for (let i = 0; i < Object.keys(commandsName).length; i++) {
+        const cmd = Object.keys(commandsName)[i];
+        const description = commandsName[cmd];
+        console.log(`${color.yellow}${cmd}${color.default_color} ${description}`);
+    }
+}
+else if (command === "generate-model:") {
+    createModel(filename);
+}
+else if (command === "generate-migration:") {
+    createMigrationFile(filename);
+}
+else if (command === "generate-controller:") {
+    generateControllerFile(filename);
+}
+else if (command === "generate-route:") {
+    generateRouteFile(filename);
+}
+else if (command === "initiate-setup") {
+    init();
+}
+else if (command === "--serve") {
+    serve();
+}
+else {
+    console.log(`${color.yellow}[!]------- Type "node expressiveCLI --help" for more commands.${color.default_color}`);
+}

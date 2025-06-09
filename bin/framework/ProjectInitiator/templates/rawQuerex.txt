@@ -1,0 +1,168 @@
+
+const mysql = require('mysql2/promise');
+const db_conn = require('./pool');
+require('dotenv').config();
+
+/**
+ * Querex query builder. Use this in chainable queries to construct MySQL statements instead of using raw SQL statements
+ * 
+ * 
+ *  
+ */
+
+class Querex {
+    constructor() {
+        this._select = '*';
+        this._from = '';
+        this._where = [];
+        this._params = [];
+        this._insertValues = null;
+        this._db_name = '';
+        this._table_name = '';
+        this._table_columns = [];
+    }
+
+    _reset() {
+        this._select = '*';
+        this._from = '';
+        this._where = [];
+        this._params = [];
+        this._insertValues = null;
+        this._db_name = '';
+        this._table_name = '';
+        this._table_columns = [];
+    }
+
+    async createDatabase() {
+        this._db_name = process.env.MYSQLDATABASE;
+        const rawSQL = `CREATE DATABASE IF NOT EXISTS ${this._db_name}`;
+
+        try {
+            const tempConn = await mysql.createConnection({
+                host: process.env.MYSQLHOST,
+                user: process.env.MYSQLUSER,
+                password: process.env.MYSQLPASSWORD,
+                port: process.env.MYSQLPORT
+            });
+
+            await tempConn.query(rawSQL);
+            await tempConn.end();
+
+        } catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
+        }
+    }
+
+    async createTable(name, columns) {
+        
+        this._table_name = name;
+        this._table_columns = columns;
+        let rawSQL = '';
+
+        try {
+            rawSQL = 'CREATE TABLE IF NOT EXISTS ' + this._table_name + ' (' + this._table_columns.join(', ') + ')';
+            await db_conn.query(rawSQL);
+        }
+        catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
+        }
+    }
+    
+    table(_tableName) {
+        this._reset();
+        this._from = _tableName;
+        return this;
+    }
+
+    select(fields) {
+        if (Array.isArray(fields)) {
+            this._select = fields.join(', ');
+        } else {
+            this._select = fields;
+        }
+        return this;
+    }
+
+    where(field, value) {
+        this._where.push(`${field} = ?`);
+        this._params.push(value);
+        return this;
+    }
+
+    insert(values) {
+        this._insertValues = values
+        return this._execInsert();
+    }
+
+    async _execInsert() {
+        let rawSQL = ''
+        try {
+            const placeholders = this._insertValues.map(() => '?').join(', ');
+            rawSQL = `INSERT INTO ${this._from} VALUES (${placeholders})`;
+            await db_conn.query(rawSQL, this._insertValues);
+        }
+        catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
+        }
+        
+    }
+
+    async all() {
+        let rawSQL = ''
+        try {
+            rawSQL = `SELECT ${this._select} FROM ${this._from}`;
+            const [results] = await db_conn.query(rawSQL);
+            return results;
+        }
+        catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
+        }
+        
+    }
+
+    async get() {
+        let rawSQL = ''
+        try {
+            rawSQL = `SELECT ${this._select} FROM ${this._from}`;
+            if (this._where.length) {
+                rawSQL += ' WHERE '+this._where.join(' AND ');
+            }
+            const [results] = await db_conn.query(rawSQL, this._params);
+            return results;
+        }
+        catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
+        }
+        
+    }
+
+    async update(dataObj) {
+        let rawSQL = '';
+        try {
+
+            if (!dataObj || Object.keys(dataObj).length == 0 ) {
+                throw new Error(`[WARNING]------- No data provided to update`);
+            }
+
+            else if (this._where.length == 0) {
+                throw new Error(`[WARNING]------- Unsafe SQL operation: No WHERE clause specified for UPDATE query. Consider using "where()" in chaining queries to prevent accidental updates of all rows.`);
+            } 
+
+            const setFields = Object.keys(dataObj).map(key => `${key} = ?`).join(', ');
+            const setValues = Object.values(dataObj);
+
+            rawSQL = `UPDATE ${this._from} SET ${setFields}`;
+            if (this._where.length) {
+                rawSQL += ' WHERE ' + this._where.join(' AND ');
+            }
+
+            const queryParams = [...setValues, ...this._params];
+            await db_conn.query(rawSQL, queryParams);
+        } catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
+        }
+    }
+
+}
+
+module.exports = new Querex();

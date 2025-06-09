@@ -1,0 +1,10 @@
+### your .gitignore
+### this is where you will list files, folders so that they are ignore when pushing especially to github
+
+.env
+uploads/*
+!uploads/.gitkeep
+views/*
+!views/.gitkeep
+expressiveCLI.js
+framework/
