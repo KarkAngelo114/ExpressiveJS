@@ -1,6 +1,8 @@
 
 const mysql = require('mysql2/promise');
+const {VarChar} = require('../../applications/regex');
 const db_conn = require('./pool');
+const mysql2 = require('mysql2');
 require('dotenv').config();
 
 /**
@@ -35,7 +37,11 @@ class Querex {
 
     async createDatabase() {
         this._db_name = process.env.MYSQLDATABASE;
-        const rawSQL = `CREATE DATABASE IF NOT EXISTS ${this._db_name}`;
+        const rawSQL = `CREATE DATABASE IF NOT EXISTS ${mysql2.escapeId(this._db_name)}`;
+        const isValid = VarChar().NoSpace(this._db_name);
+        if (!isValid) {
+            throw new Error("[X]------- Invalid database name: No special characters allowed");
+        }
 
         try {
             const tempConn = await mysql.createConnection({
@@ -59,8 +65,14 @@ class Querex {
         this._table_columns = columns;
         let rawSQL = '';
 
+        const isValid = VarChar().NoSpace(this._table_name);
+
+        if (!isValid) {
+            throw new Error("[X]------- Invalid table name: No special characters allowed");
+        }
+
         try {
-            rawSQL = 'CREATE TABLE IF NOT EXISTS ' + this._table_name + ' (' + this._table_columns.join(', ') + ')';
+            rawSQL = 'CREATE TABLE IF NOT EXISTS ' + mysql2.escapeId(this._table_name) + ' (' + this._table_columns.join(', ') + ')';
             await db_conn.query(rawSQL);
         }
         catch (err) {
