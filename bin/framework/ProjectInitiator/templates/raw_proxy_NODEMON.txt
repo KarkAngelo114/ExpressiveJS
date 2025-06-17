@@ -1,0 +1,6 @@
+{
+    "watch": ["applications","proxy_App.js", "controllers","middlewares","routes"],
+    "ext": "js, json",
+    "ignore": ["framework", "node_modules", "uploads", "views"],
+    "exec": "node proxy_App.js"
+}

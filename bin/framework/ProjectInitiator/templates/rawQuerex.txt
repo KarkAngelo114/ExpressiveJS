@@ -6,9 +6,10 @@ const mysql2 = require('mysql2');
 require('dotenv').config();
 
 /**
- * Querex query builder. Use this in chainable queries to construct MySQL statements instead of using raw SQL statements
+ * Querex query builder. Use this in chaining methods to construct MySQL statements instead of using raw SQL statements
  * 
  * 
+ * @class
  *  
  */
 
@@ -22,18 +23,18 @@ class Querex {
         this._db_name = '';
         this._table_name = '';
         this._table_columns = [];
+        this.debugMode = false;
+        this.forceExecute = false;
     }
 
-    _reset() {
-        this._select = '*';
-        this._from = '';
-        this._where = [];
-        this._params = [];
-        this._insertValues = null;
-        this._db_name = '';
-        this._table_name = '';
-        this._table_columns = [];
-    }
+    /**
+     * 
+     * 
+     * 
+     * @async
+     * @function
+     * @throws {Error} If there are problem/s executing the SQL statement to create a database (eg: not connected to the database host, incorrect MySQL credentials, local development server not running, etc.)
+     */
 
     async createDatabase() {
         this._db_name = process.env.MYSQLDATABASE;
@@ -51,13 +52,31 @@ class Querex {
                 port: process.env.MYSQLPORT
             });
 
-            await tempConn.query(rawSQL);
-            await tempConn.end();
-
+            if (this.debugMode) {
+                console.log(`[Debug]: ${rawSQL}`);
+                this.#_reset();
+            }
+            else {
+                await tempConn.query(rawSQL);
+                await tempConn.end();
+            }   
+            
         } catch (err) {
             console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
         }
     }
+
+    /**
+     * 
+     * 
+     * @async
+     * @method createTable()
+     * @param {String} name - the table name
+     * @param {Array.<string>} columns - the column names for your table
+     * @throws {Error} if the table name is invalid or failed to execute the query because of MySQL related problems.
+     * 
+     * 
+     */
 
     async createTable(name, columns) {
         
@@ -73,19 +92,68 @@ class Querex {
 
         try {
             rawSQL = 'CREATE TABLE IF NOT EXISTS ' + mysql2.escapeId(this._table_name) + ' (' + this._table_columns.join(', ') + ')';
-            await db_conn.query(rawSQL);
+            if (this.debugMode) {
+                console.log(`[Debug]: ${rawSQL}`);
+                this.#_reset();
+            }
+            else {
+                await db_conn.query(rawSQL);
+            }
         }
         catch (err) {
             console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
         }
     }
+
+    /**
+     * 
+     * @async
+     * @method table()
+     * @param {String} _tableName - the table name in your database
+     * 
+     * the table() method allows you to select a table by passing the table name. Can be chain with .select(), .where(), .get(), .all(), etc.
+     * Attempting to chain another table() will override the first string passed to this method.
+     */
     
     table(_tableName) {
-        this._reset();
         this._from = _tableName;
         return this;
     }
 
+    /**
+     * 
+     * @method debug()
+     * 
+     * The debug() method allows you to chain before other methods use to Construct SQL queries. It is use to log the raw SQL query before actual execution.
+     */
+    debug() {
+        this.debugMode = true;
+        return this;
+    }
+
+    /**
+     * 
+     * @method forceExec()
+     * 
+     * The forceExec() method allows you chain before other methods use to Construct SQL queries. It is use to force execute SQL queries that Querex doesn't allows you to (eg: using update() or delete() without where(0)).
+     * But be cautious when using this method as it will bypass the SQL query restriction. Consider using debug() first.
+     * 
+     */
+
+    forceExec() {
+        this.forceExecute = true;
+        return this;
+    }
+
+    /**
+     * 
+     * @async
+     * @method select()
+     * @param {Array.<string>} fields - Array of column names to be use for MySQL select statements
+     *  
+     * the select() method allows you to filter out which columns you want to get data from - equivalent to MySQL's SELECT column1, column2, column3 and so on.
+     * Can be chain with .get(), .all, .where(), etc.
+     */
     select(fields) {
         if (Array.isArray(fields)) {
             this._select = fields.join(', ');
@@ -95,52 +163,92 @@ class Querex {
         return this;
     }
 
+    /**
+     * @async
+     * @method where()
+     * @param {String} field - the column name
+     * @param {String} value - the value corresponds to the field (Similar to SQL's WHERE column_name = value)
+     * 
+     * The where() method allow you chain more where() methods and chain it with get() method which is equivalent of SQL's WHERE column1 = value1 AND column2 = value2 and so on
+     * 
+     */
+
     where(field, value) {
         this._where.push(`${field} = ?`);
         this._params.push(value);
         return this;
     }
 
+    /**
+     * 
+     * @async
+     * @method insert()
+     * @param {Array.<string>} values - array of data to be inserted to the table
+     * 
+     * The insert() method allows you to insert data to the table. Often chain after .table() method.
+     */
+
     insert(values) {
         this._insertValues = values
-        return this._execInsert();
+        return this.#_execInsert();
     }
 
-    async _execInsert() {
-        let rawSQL = ''
-        try {
-            const placeholders = this._insertValues.map(() => '?').join(', ');
-            rawSQL = `INSERT INTO ${this._from} VALUES (${placeholders})`;
-            await db_conn.query(rawSQL, this._insertValues);
-        }
-        catch (err) {
-            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
-        }
-        
-    }
+    /**
+     * @async
+     * @method all()
+     * @returns {Array} - The result of the query;
+     * 
+     * The all() method allows you to retrieve data from the table you selected. Must specify the table name first (using table() method). Optional: can be chain with select() method
+     */
 
     async all() {
         let rawSQL = ''
         try {
             rawSQL = `SELECT ${this._select} FROM ${this._from}`;
-            const [results] = await db_conn.query(rawSQL);
-            return results;
+
+            if (this.debugMode) {
+                console.log(`[Debug]: ${rawSQL}`);
+                this.#_reset();
+            }
+            else {
+                const [results] = await db_conn.query(rawSQL);
+                this.#_reset();
+                return results;
+            }
+            
         }
         catch (err) {
             console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
         }
         
     }
+
+    /**
+     * @async
+     * @method get()
+     * @returns The result the query
+     * 
+     * The get() method allows you to get the specific data you are querying. Often chain after where() method.
+     */
 
     async get() {
         let rawSQL = ''
         try {
             rawSQL = `SELECT ${this._select} FROM ${this._from}`;
+
             if (this._where.length) {
                 rawSQL += ' WHERE '+this._where.join(' AND ');
             }
-            const [results] = await db_conn.query(rawSQL, this._params);
-            return results;
+
+            if (this.debugMode) {
+                console.log(`[Debug]: ${rawSQL}`);
+                this.#_reset();
+            }
+            else {
+                const [results] = await db_conn.query(rawSQL, this._params);
+                this.#_reset();
+                return results;
+            }
         }
         catch (err) {
             console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
@@ -148,31 +256,133 @@ class Querex {
         
     }
 
+    /**
+     * @async
+     * @method update()
+     * @param {Object} dataObj - a set having their keys with values. The keys represents the Column names and their corresponding values are the value to be use in updating
+     * @throws {Error} - If not chained with where() or the set is empty, throws an error.
+     * 
+     * The update() method allows you to perform updates on your database. Querex doesn't allows you to perform updates if there's no WHERE clause (using where() method) chained, 
+     * unless you chained with forceExec() method before constructing SQL query. Consider using debug() method first if you're unsure with your query.
+     * Using update() alone translate to this SQL query: UPDATE table_name SET column_name = value which updates all under that column. Querex also doesn't allow to pass empty set
+     * As it will update the data as empty or NULL. For safety, chain the update() method after where() method/s.
+     */
+
     async update(dataObj) {
         let rawSQL = '';
         try {
-
-            if (!dataObj || Object.keys(dataObj).length == 0 ) {
+            // Validate input
+            if (!dataObj || Object.keys(dataObj).length === 0) {
                 throw new Error(`[WARNING]------- No data provided to update`);
             }
-
-            else if (this._where.length == 0) {
-                throw new Error(`[WARNING]------- Unsafe SQL operation: No WHERE clause specified for UPDATE query. Consider using "where()" in chaining queries to prevent accidental updates of all rows.`);
-            } 
 
             const setFields = Object.keys(dataObj).map(key => `${key} = ?`).join(', ');
             const setValues = Object.values(dataObj);
 
             rawSQL = `UPDATE ${this._from} SET ${setFields}`;
-            if (this._where.length) {
+
+            // Append WHERE clause if exists
+            const hasWhere = this._where.length > 0;
+            if (hasWhere) {
                 rawSQL += ' WHERE ' + this._where.join(' AND ');
             }
 
+            // Handle unsafe SQL
+            const isUnsafe = !hasWhere;
+
+            if (this.debugMode) {
+                console.log(`[Debug]: ${rawSQL}`);
+                this.#_reset();
+                return;
+            }
+
+            if (isUnsafe && !this.forceExecute) {
+                throw new Error(`[WARNING]------- Unsafe SQL operation: No WHERE clause specified for UPDATE query. Use "where()" or chain forceExec().`);
+            }
+
+            // Execute query
             const queryParams = [...setValues, ...this._params];
             await db_conn.query(rawSQL, queryParams);
+            this.#_reset();
         } catch (err) {
             console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
         }
+    }
+
+
+    /**
+     * 
+     * @async
+     * @method delete()
+     * @throws {Error} - when there's no WHERE clause or is empty.
+     * 
+     * The delete() allows you to perform deletion of data to your database. Querex doesn't allow you to perform deletion if not chained after where() method/s
+     * unless you chained with forceExec() method before constructing SQL query. Consider using debug() method first if you're unsure with your query.
+     */
+
+    async delete() {
+        let rawSQL = '';
+        try {
+            rawSQL = `DELETE FROM ${this._from}`;
+
+            const hasWhere = this._where.length > 0;
+            if (hasWhere) {
+                rawSQL += ' WHERE ' + this._where.join(' AND ');
+            }
+
+            const isUnsafe = !hasWhere;
+
+            if (this.debugMode) {
+                console.log(`[Debug]: ${rawSQL}`);
+                this.#_reset();
+                return;
+            }
+
+            if (isUnsafe && !this.forceExecute) {
+                throw new Error('[WARNING]------- Unsafe SQL operation: No "WHERE" clause in the DELETE query. Use where() or chain forceExec().');
+            }
+
+            await db_conn.query(rawSQL, this._params);
+            this.#_reset();
+        } catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
+        }
+    }
+
+
+    //================== private methods ==================
+
+    async #_execInsert() {
+        let rawSQL = ''
+        try {
+            const placeholders = this._insertValues.map(() => '?').join(', ');
+            rawSQL = `INSERT INTO ${this._from} VALUES (${placeholders})`;
+
+            if (this.debugMode) {
+                console.log(`[Debug]: ${rawSQL}`);
+                this.#_reset();
+            }
+            else {
+                await db_conn.query(rawSQL, this._insertValues);
+                this.#_reset();
+            }   
+        }
+        catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
+        }
+    }
+
+    #_reset() {
+        this._select = '*';
+        this._from = '';
+        this._where = [];
+        this._params = [];
+        this._insertValues = null;
+        this._db_name = '';
+        this._table_name = '';
+        this._table_columns = [];
+        this.debugMode = false;
+        this.forceExecute = false;
     }
 
 }

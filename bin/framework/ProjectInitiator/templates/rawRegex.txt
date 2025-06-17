@@ -2,7 +2,6 @@
 // You can modify this to suits your needs.
 // Below is only the basic implementation, you can add more
 
-
 const stringChars = /^[a-zA-ZÑñ\s._-]+$/;
 const telVal = /^09\d+$/;
 const emailRegex = /^[\w.-]+@[\w.-]+\.\w{2,}$/;

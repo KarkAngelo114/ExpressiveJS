@@ -27,8 +27,5 @@ this will give you idea what to do with the help of the CLI
 5. ExpressiveJS might not generate all the applications needed for your project, feel free to add more that suits your need.
 
 
-Don't forget to read the documentations!
-
-
 
 --- Thank you for using ExpressiveJS :)---
