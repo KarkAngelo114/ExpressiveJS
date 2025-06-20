@@ -54,7 +54,6 @@ class Querex {
 
             if (this.debugMode) {
                 console.log(`[Debug]: ${rawSQL}`);
-                this.#_reset();
             }
             else {
                 await tempConn.query(rawSQL);
@@ -94,7 +93,6 @@ class Querex {
             rawSQL = 'CREATE TABLE IF NOT EXISTS ' + mysql2.escapeId(this._table_name) + ' (' + this._table_columns.join(', ') + ')';
             if (this.debugMode) {
                 console.log(`[Debug]: ${rawSQL}`);
-                this.#_reset();
             }
             else {
                 await db_conn.query(rawSQL);
@@ -107,7 +105,7 @@ class Querex {
 
     /**
      * 
-     * @async
+     * 
      * @method table()
      * @param {String} _tableName - the table name in your database
      * 
@@ -117,6 +115,7 @@ class Querex {
     
     table(_tableName) {
         this._from = _tableName;
+        this.#_reset();
         return this;
     }
 
@@ -147,7 +146,7 @@ class Querex {
 
     /**
      * 
-     * @async
+     *
      * @method select()
      * @param {Array.<string>} fields - Array of column names to be use for MySQL select statements
      *  
@@ -163,8 +162,8 @@ class Querex {
         return this;
     }
 
+
     /**
-     * @async
      * @method where()
      * @param {String} field - the column name
      * @param {String} value - the value corresponds to the field (Similar to SQL's WHERE column_name = value)
@@ -180,8 +179,39 @@ class Querex {
     }
 
     /**
+     * @method where()
+     * @param {String} field - the column name
+     * @param {String} value - the value corresponds to the field
      * 
-     * @async
+     * The exclude() method allows you to exclude a result from the query, even it passes the SQL query condition
+     * 
+     */
+
+    exclude(field, value) {
+        this._where.push(`${field} <> ?`);
+        this._params.push(value);
+        return this;
+    }
+
+    /**
+     * 
+     @method excludeMultiple()
+     @param {String} field - the column name
+     @param values - values to exclude
+
+     The excludeMultiple() allows you to exclude multiple datapoints even they passes the SQL query condition.
+     */
+
+    excludeMultiple(field, values) {
+        const placeholders = values.map(() => '?').join(', ');
+        this._where.push(`${field} NOT IN (${placeholders})`);
+        this._params.push(...values);
+        return this;
+    }
+
+    /**
+     * 
+     * 
      * @method insert()
      * @param {Array.<string>} values - array of data to be inserted to the table
      * 
@@ -208,11 +238,9 @@ class Querex {
 
             if (this.debugMode) {
                 console.log(`[Debug]: ${rawSQL}`);
-                this.#_reset();
             }
             else {
                 const [results] = await db_conn.query(rawSQL);
-                this.#_reset();
                 return results;
             }
             
@@ -242,11 +270,9 @@ class Querex {
 
             if (this.debugMode) {
                 console.log(`[Debug]: ${rawSQL}`);
-                this.#_reset();
             }
             else {
                 const [results] = await db_conn.query(rawSQL, this._params);
-                this.#_reset();
                 return results;
             }
         }
@@ -292,7 +318,6 @@ class Querex {
 
             if (this.debugMode) {
                 console.log(`[Debug]: ${rawSQL}`);
-                this.#_reset();
                 return;
             }
 
@@ -303,7 +328,6 @@ class Querex {
             // Execute query
             const queryParams = [...setValues, ...this._params];
             await db_conn.query(rawSQL, queryParams);
-            this.#_reset();
         } catch (err) {
             console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
         }
@@ -334,7 +358,6 @@ class Querex {
 
             if (this.debugMode) {
                 console.log(`[Debug]: ${rawSQL}`);
-                this.#_reset();
                 return;
             }
 
@@ -343,16 +366,112 @@ class Querex {
             }
 
             await db_conn.query(rawSQL, this._params);
-            this.#_reset();
         } catch (err) {
             console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
         }
     }
 
+    /**
+     * @async
+     * @method count()
+     * @returns {Promise<number>} - The number of rows matching the query.
+     * @throws {Error} If the query fails to execute.
+     * 
+     * The count() method allows you to retrieve the number of rows in the selected table, optionally filtered by any chained where() conditions.
+     * Use this method to perform SQL COUNT queries in a fluent, chainable way.
+     */
+    async count() {
+        let rawSQL = '';
+        try {
+            let countTarget = '*';
+
+            if (this._select !== '*') {
+                const selectedFields = this._select.split(',').map(s => s.trim());
+
+                if (selectedFields.length > 1) {
+                    throw new Error(`[ERROR]------- SQL COUNT() accepts only one column or '*'. You've selected multiple: (${this._select})`);
+                }
+            }
+
+            rawSQL = `SELECT COUNT(${countTarget}) AS count FROM ${this._from}`;
+
+            if (this._where.length) {
+                rawSQL += ' WHERE ' + this._where.join(' AND ');
+            }
+
+            if (this.debugMode) {
+                console.log(`[Debug]: ${rawSQL}`);
+                return;
+            }
+
+            const [rows] = await db_conn.query(rawSQL, this._params);
+            return rows[0]?.count ?? 0;
+        } catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
+        }
+    }
+
+    /**
+     * 
+     * @async
+     * @method getFrequency() - 
+     * @param {boolean} toFloat - when set to false, converts the results to whole number, otherwise the result of the calculation is still a floating point.
+     * @returns - the result of the frequency calculation
+     * 
+     * The getFrequency() method allows you to get the frequency percentage the datapoint. Perfect use when working with statistics.
+     */
+
+    async getFrequency(toFloat = true) {
+        const query_result = await this.get();
+        const count_result = await this.count();
+
+        const total = query_result?.length ?? 0;
+        const frequency = total > 0 ? (count_result * 100) / total : 0;
+
+        if (this.debugMode) {
+            console.log("\n===========================");
+            console.log(`Formula: F = (number of occurrence X 100) / total number of datapoints\n`)
+            console.log(`Total number datapoints: ${total}\nTotal number of occurrence of the target datapoint: ${count_result}\nOutput: ${frequency}`);
+        } else {
+            if (toFloat) {
+                return frequency;
+            } else {
+                return Math.round(frequency);
+            }
+        }
+    }
+
+    // async getFrequency(toFloat = true) {
+    //     const filteredCount = await this.count();
+
+    //     // Clone Querex instance to reuse the where() chain excluding the last one (the rating condition)
+    //     const totalQuerex = new Querex();
+    //     totalQuerex._from = this._from;
+    //     totalQuerex._select = this._select;
+        
+    //     // All previous where clauses except the last one (which targets specific rating)
+    //     totalQuerex._where = this._where.slice(0, -1);
+    //     totalQuerex._params = this._params.slice(0, -1);
+
+    //     const totalCount = await totalQuerex.count();
+
+    //     const frequency = (filteredCount * 100) / (totalCount || 1); // Prevent division by zero
+
+    //     if (this.debugMode) {
+    //         console.log("\n===========================");
+    //         console.log(`Formula: F = (number of occurrence X 100) / total number of datapoints`);
+    //         console.log(`Filtered count: ${filteredCount}`);
+    //         console.log(`Total count: ${totalCount}`);
+    //         console.log(`Output: ${frequency}`);
+    //     }
+
+    //     return toFloat ? frequency : Math.round(frequency);
+    // }
 
     //================== private methods ==================
 
     async #_execInsert() {
+
         let rawSQL = ''
         try {
             const placeholders = this._insertValues.map(() => '?').join(', ');
@@ -360,11 +479,9 @@ class Querex {
 
             if (this.debugMode) {
                 console.log(`[Debug]: ${rawSQL}`);
-                this.#_reset();
             }
             else {
                 await db_conn.query(rawSQL, this._insertValues);
-                this.#_reset();
             }   
         }
         catch (err) {
@@ -379,9 +496,7 @@ class Querex {
         this._params = [];
         this._insertValues = null;
         this._db_name = '';
-        this._table_name = '';
         this._table_columns = [];
-        this.debugMode = false;
         this.forceExecute = false;
     }
 

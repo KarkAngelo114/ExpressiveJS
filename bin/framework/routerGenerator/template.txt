@@ -2,19 +2,9 @@
 // to use this file, ensure that you register this route in your App.js and import the necessary controller
 
 const express = require('express');
-const rate_limiter = require('../middlewares/express-rate-limit');
 const router = express.Router();
+const rate_limiter = require('../middlewares/express-rate-limit');
 
-// ===== Import your middlewares here =====
-// (eg: const AUTH = require('../middlewares/AUTH_API'); )
-
-// ====== import your controllers here ======
-// exmample: const {myContollerFunction} = require('../controllers/myController');
-
-// ==== your routes go here ====
-// (eg: router.post('/myEndpoint, myContollerFunction); )
-
-// To use middlewares, ensure that they are place, before your controller
-//(eg: router.post('/myEndpoint, AUTH, myContollerFunction);)
+// 
 
 module.exports = router;
