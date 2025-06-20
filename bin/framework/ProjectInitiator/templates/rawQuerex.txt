@@ -114,8 +114,8 @@ class Querex {
      */
     
     table(_tableName) {
-        this._from = _tableName;
         this.#_reset();
+        this._from = _tableName;
         return this;
     }
 
@@ -496,6 +496,7 @@ class Querex {
         this._params = [];
         this._insertValues = null;
         this._db_name = '';
+        this._table_name = '';
         this._table_columns = [];
         this.forceExecute = false;
     }
