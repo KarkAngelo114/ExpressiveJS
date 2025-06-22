@@ -25,6 +25,8 @@ class Querex {
         this._table_columns = [];
         this.debugMode = false;
         this.forceExecute = false;
+        this.lock = false;
+        this.debugFrequency = false;
     }
 
     /**
@@ -37,6 +39,7 @@ class Querex {
      */
 
     async createDatabase() {
+        this.#_isLocked();
         this._db_name = process.env.MYSQLDATABASE;
         const rawSQL = `CREATE DATABASE IF NOT EXISTS ${mysql2.escapeId(this._db_name)}`;
         const isValid = VarChar().NoSpace(this._db_name);
@@ -78,7 +81,7 @@ class Querex {
      */
 
     async createTable(name, columns) {
-        
+        this.#_isLocked();
         this._table_name = name;
         this._table_columns = columns;
         let rawSQL = '';
@@ -132,6 +135,18 @@ class Querex {
 
     /**
      * 
+    @method debugFrequency();
+
+    The debugFreq() method allows to you to chain before other methods. It is used to debug the output of the getFreq() method when working with numerical data on the database.
+
+     */
+    debugFreq() {
+        this.debugFrequency = true;
+        return this;
+    }
+
+    /**
+     * 
      * @method forceExec()
      * 
      * The forceExec() method allows you chain before other methods use to Construct SQL queries. It is use to force execute SQL queries that Querex doesn't allows you to (eg: using update() or delete() without where(0)).
@@ -154,6 +169,7 @@ class Querex {
      * Can be chain with .get(), .all, .where(), etc.
      */
     select(fields) {
+        this.#_isLocked();
         if (Array.isArray(fields)) {
             this._select = fields.join(', ');
         } else {
@@ -173,6 +189,7 @@ class Querex {
      */
 
     where(field, value) {
+        this.#_isLocked();
         this._where.push(`${field} = ?`);
         this._params.push(value);
         return this;
@@ -188,6 +205,7 @@ class Querex {
      */
 
     exclude(field, value) {
+        this.#_isLocked();
         this._where.push(`${field} <> ?`);
         this._params.push(value);
         return this;
@@ -203,6 +221,7 @@ class Querex {
      */
 
     excludeMultiple(field, values) {
+        this.#_isLocked();
         const placeholders = values.map(() => '?').join(', ');
         this._where.push(`${field} NOT IN (${placeholders})`);
         this._params.push(...values);
@@ -219,6 +238,7 @@ class Querex {
      */
 
     insert(values) {
+        this.#_isLocked();
         this._insertValues = values
         return this.#_execInsert();
     }
@@ -232,15 +252,23 @@ class Querex {
      */
 
     async all() {
+        this.#_isLocked();
         let rawSQL = ''
         try {
             rawSQL = `SELECT ${this._select} FROM ${this._from}`;
 
             if (this.debugMode) {
                 console.log(`[Debug]: ${rawSQL}`);
+                return;
+            }
+            else if (this.debugFrequency) {
+                const [results] = await db_conn.query(rawSQL);
+                this.lock = true;
+                return results;
             }
             else {
                 const [results] = await db_conn.query(rawSQL);
+                this.lock = true;
                 return results;
             }
             
@@ -260,6 +288,7 @@ class Querex {
      */
 
     async get() {
+        this.#_isLocked();
         let rawSQL = ''
         try {
             rawSQL = `SELECT ${this._select} FROM ${this._from}`;
@@ -273,14 +302,50 @@ class Querex {
             }
             else {
                 const [results] = await db_conn.query(rawSQL, this._params);
+                this.lock = true;
                 return results;
             }
         }
         catch (err) {
             console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
         }
-        
     }
+
+    /**
+    
+    @async
+    @method first()
+    @returns The first occurring result of the query
+
+    The first() method allows you to extract the first result of the query. Similar to get(), you wuuld need to use where() to do filtering.
+    But instead of getting all the result that matches to the query, it will only return the first occurring result.
+    
+     */
+     async first() {
+        let rawSQL = '';
+        try {
+            rawSQL += `SELECT ${this._select} FROM ${this._from}`;
+
+            if (this._where.length > 0) {
+                rawSQL += ' WHERE ' + this._where.join(' AND ');
+            }
+
+            rawSQL += ' LIMIT 1';
+            
+            if (this.debugMode) {
+                console.log(`[DEBUG] ${rawSQL}`);
+            }
+            else {
+                const [results] = await db_conn.query(rawSQL, this._params);
+                this.lock = true;
+                return results[0];
+            }
+
+        }
+        catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
+        }
+     }
 
     /**
      * @async
@@ -295,6 +360,7 @@ class Querex {
      */
 
     async update(dataObj) {
+        this.#_isLocked();
         let rawSQL = '';
         try {
             // Validate input
@@ -328,11 +394,97 @@ class Querex {
             // Execute query
             const queryParams = [...setValues, ...this._params];
             await db_conn.query(rawSQL, queryParams);
+            this.lock = true;
         } catch (err) {
             console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
         }
     }
 
+    /**
+     * 
+    @async
+    @method increment()
+    @param {String} fields - target column that holds numerical values
+    @param {Number} value - the value to increment the stored interger value. If the value is not set, it is set to default by 1
+    @throws {Error} throws an error
+
+    The increment() method allows to update the numerical data stored in a column and increment them by the value being passed (default is 1).  This is a form of updating data 
+    to the database, therefore, Querex doesn't allow the use of increment() method directly without the use WHERE clause to avoid mass updates.
+    Consider chaining with where(). If you are certain you need to update all, you can chain the increment() method with forceExec() to bypass
+    the restriction.
+
+     */
+
+    async increment(field, value = 1) {
+        this.#_isLocked();
+        let rawSQL = '';
+
+        try {
+            rawSQL += `UPDATE ${this._from} SET ${field} = ${field} + ?`;
+
+            if (this._where.length > 0) {
+                rawSQL += ' WHERE ' + this._where.join(' AND ');
+            }
+
+            if (!this.debugMode && !this.forceExecute && this._where.length == 0) {
+                throw new Error(`[WARNING]------- Unsafe SQL operation: No WHERE clause specified for UPDATE query. Use "where()" or chain forceExec().`);
+            }
+            else if (this.debugMode) {
+                console.log(`[DEBUG]: ${rawSQL}`);
+            }
+            else {
+                const params = [value, ...this._params];
+                await db_conn.query(rawSQL, params);
+                this.lock = true;
+            }
+        }
+        catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
+        }
+    }
+
+    /**
+     * 
+    @async
+    @method decrement()
+    @param {String} fields - target column that holds numerical values
+    @param {Number} value - the value to decrement the stored interger value. If the value is not set, it is set to default by 1
+    @throws {Error} throws an error
+
+    The decrement() method allows to update the numerical data stored in a column and decrement them by the value being passed (default is 1.  This is a form of updating data 
+    to the database, therefore, Querex doesn't allow the use of increment() method directly without the use of WHERE clause to avoid mass updates.
+    Consider chaining with where(). If you are certain you need to update all, you can chain the decrement() method with forceExec() to bypass
+    the restriction.
+
+     */
+
+    async decrement(field, value = 1) {
+        this.#_isLocked();
+        let rawSQL = '';
+
+        try {
+            rawSQL += `UPDATE ${this._from} SET ${field} = ${field} - ?`;
+
+            if (this._where.length > 0) {
+                rawSQL += ' WHERE ' + this._where.join(' AND ');
+            }
+
+            if (!this.debugMode && !this.forceExecute && this._where.length == 0) {
+                throw new Error(`[WARNING]------- Unsafe SQL operation: No WHERE clause specified for UPDATE query. Use "where()" or chain forceExec().`);
+            }
+            else if (this.debugMode) {
+                console.log(`[DEBUG]: ${rawSQL}`);
+            }
+            else {
+                const params = [value, ...this._params];
+                await db_conn.query(rawSQL, params);
+                this.lock = true;
+            }
+        }
+        catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
+        }
+    }
 
     /**
      * 
@@ -345,6 +497,7 @@ class Querex {
      */
 
     async delete() {
+        this.#_isLocked();
         let rawSQL = '';
         try {
             rawSQL = `DELETE FROM ${this._from}`;
@@ -366,6 +519,7 @@ class Querex {
             }
 
             await db_conn.query(rawSQL, this._params);
+            this.lock = true;
         } catch (err) {
             console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
         }
@@ -381,6 +535,7 @@ class Querex {
      * Use this method to perform SQL COUNT queries in a fluent, chainable way.
      */
     async count() {
+        this.#_isLocked();
         let rawSQL = '';
         try {
             let countTarget = '*';
@@ -395,7 +550,7 @@ class Querex {
 
             rawSQL = `SELECT COUNT(${countTarget}) AS count FROM ${this._from}`;
 
-            if (this._where.length) {
+            if (this._where.length > 0) {
                 rawSQL += ' WHERE ' + this._where.join(' AND ');
             }
 
@@ -403,75 +558,77 @@ class Querex {
                 console.log(`[Debug]: ${rawSQL}`);
                 return;
             }
-
-            const [rows] = await db_conn.query(rawSQL, this._params);
-            return rows[0]?.count ?? 0;
+            else if (this.debugFrequency) {
+                const [rows] = await db_conn.query(rawSQL, this._params);
+                this.lock = true;
+                return rows[0]?.count ?? 0;
+            }
+            else {
+                const [rows] = await db_conn.query(rawSQL, this._params);
+                this.lock = true;
+                return rows[0]?.count ?? 0;
+            }
+            
         } catch (err) {
             console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
         }
     }
 
-    /**
-     * 
-     * @async
-     * @method getFrequency() - 
-     * @param {boolean} toFloat - when set to false, converts the results to whole number, otherwise the result of the calculation is still a floating point.
-     * @returns - the result of the frequency calculation
-     * 
-     * The getFrequency() method allows you to get the frequency percentage the datapoint. Perfect use when working with statistics.
-     */
 
-    async getFrequency(toFloat = true) {
-        const query_result = await this.get();
+    /**
+     * Calculates the frequency (as a percentage) of rows in the database where a specific column matches a given value.
+     *
+     * @async
+     * @param {boolean} [toFloat=true] - If true, returns the frequency as a float; otherwise, returns a rounded integer.
+     * @param {string} targetColumn - The name of the column to search for the target value.
+     * @param {any} targetValue - The value to match in the target column.
+     * @returns {Promise<number>} The frequency percentage of matching rows, as a float or integer based on `toFloat`.
+     * @throws {Error} If `targetColumn` or `targetValue` is not provided.
+     */
+    async getFrequency(toFloat = true, targetColumn, targetValue) {
+        this.lock = false;
+
+        if (!targetColumn || !targetValue) {
+            throw new Error("[ERROR]------- 'targetColumn' and 'targetValue' must be provided to count the total rows in a field.");
+        }
+
+        let rawSQL = `SELECT ${this._select} FROM ${this._from} WHERE ${targetColumn} = ?`;
+        const [query_result] = await db_conn.query(rawSQL, [targetValue]);
+
+        this.lock = false;
         const count_result = await this.count();
 
-        const total = query_result?.length ?? 0;
-        const frequency = total > 0 ? (count_result * 100) / total : 0;
+        let frequency;
 
-        if (this.debugMode) {
+        const total = query_result?.length ?? 0;
+        if (total > 0) {
+            frequency = (count_result * 100) / total;
+        }
+        else {
+            frequency = 0;
+        }
+        
+        if (this.debugFrequency) {
+            console.log(`Total datapoints: ${total}`);
+            console.log(`Total count of the occurence: ${count_result}`);
             console.log("\n===========================");
-            console.log(`Formula: F = (number of occurrence X 100) / total number of datapoints\n`)
-            console.log(`Total number datapoints: ${total}\nTotal number of occurrence of the target datapoint: ${count_result}\nOutput: ${frequency}`);
+            console.log(`Formula: F = (${count_result} X 100) / ${total}\n`)
+            console.log(`Output: ${frequency} or ${Math.round(frequency).toFixed(2)}%`);
         } else {
             if (toFloat) {
+                this.lock = true;
                 return frequency;
             } else {
+                this.lock = true;
                 return Math.round(frequency);
             }
         }
     }
 
-    // async getFrequency(toFloat = true) {
-    //     const filteredCount = await this.count();
-
-    //     // Clone Querex instance to reuse the where() chain excluding the last one (the rating condition)
-    //     const totalQuerex = new Querex();
-    //     totalQuerex._from = this._from;
-    //     totalQuerex._select = this._select;
-        
-    //     // All previous where clauses except the last one (which targets specific rating)
-    //     totalQuerex._where = this._where.slice(0, -1);
-    //     totalQuerex._params = this._params.slice(0, -1);
-
-    //     const totalCount = await totalQuerex.count();
-
-    //     const frequency = (filteredCount * 100) / (totalCount || 1); // Prevent division by zero
-
-    //     if (this.debugMode) {
-    //         console.log("\n===========================");
-    //         console.log(`Formula: F = (number of occurrence X 100) / total number of datapoints`);
-    //         console.log(`Filtered count: ${filteredCount}`);
-    //         console.log(`Total count: ${totalCount}`);
-    //         console.log(`Output: ${frequency}`);
-    //     }
-
-    //     return toFloat ? frequency : Math.round(frequency);
-    // }
-
     //================== private methods ==================
 
     async #_execInsert() {
-
+        this.#_isLocked();
         let rawSQL = ''
         try {
             const placeholders = this._insertValues.map(() => '?').join(', ');
@@ -482,6 +639,7 @@ class Querex {
             }
             else {
                 await db_conn.query(rawSQL, this._insertValues);
+                this.lock = true;
             }   
         }
         catch (err) {
@@ -499,8 +657,16 @@ class Querex {
         this._table_name = '';
         this._table_columns = [];
         this.forceExecute = false;
+        this.lock = false;
+        this.debugMode = false;
+        this.debugFrequency = false;
     }
 
+    #_isLocked() {
+        if (this.lock) {
+            throw new Error("[LOCKED]------- SQL query builder currently locked to execute the current query.");
+        }
+    }
 }
 
 module.exports = new Querex();
