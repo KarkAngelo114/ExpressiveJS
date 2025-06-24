@@ -6,7 +6,7 @@ const path = require('path');
 const createFolders = async () => {
 
     const folders = [
-        'applications',
+        'applications/server-workers',
         'controllers',
         'database/MySQL/',
         'middlewares',

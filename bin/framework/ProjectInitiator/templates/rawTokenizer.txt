@@ -1,0 +1,11 @@
+
+/**
+ * 
+ * @param {string} string 
+ * @returns an array of strings
+ */
+const tokenize = (string) => {
+    return string.toLowerCase().split(/\s+/).filter(Boolean);
+}
+
+module.exports = tokenize;

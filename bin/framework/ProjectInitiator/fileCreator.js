@@ -23,7 +23,9 @@ const filesToCreate = [
     ['rawViewsGitIgnore.txt', 'views/.gitignore'],
     ['rawIndex.txt', 'views/index.html'],
     ['rawViewsTxt.txt', 'views/views.txt'],
-    ['rawSession.txt', 'sessions/sessions.config.js']
+    ['rawSession.txt', 'sessions/sessions.config.js'],
+    ['rawTokenizer.txt', 'applications/tokenizer.js'],
+    ['rawJaccard.txt', 'applications/jaccard-computation.js']
 ];
 
 const emptyFilesToCreate = [

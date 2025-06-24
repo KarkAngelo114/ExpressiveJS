@@ -191,7 +191,47 @@ class Querex {
     where(field, value) {
         this.#_isLocked();
         this._where.push(`${field} = ?`);
-        this._params.push(value);
+        if (value) {
+            this._params.push(value);
+            return this;
+        }
+        else {
+            this._params.push("EMPTY");
+            return this;
+        }
+    }
+
+
+    /**
+     * Modifies the last WHERE clause to use the SQL `LIKE` operator instead of `=`,
+     * allowing for pattern matching on the specified column.
+     * 
+     * The provided value is wrapped with `%` wildcards to match any substring.
+     * Throws an error if no WHERE clause has been specified prior to calling this method.
+     *
+     * @param {string} value - The value to match against the column using the `LIKE` operator.
+     * @returns {this} Returns the current query builder instance for method chaining.
+     * @throws {Error} Throws an error if no columns have been specified in the WHERE clause.
+     */
+    like(value) {
+        this.#_isLocked();
+        if (this._where.length == 0) {
+            throw new error("No Columns specified");
+        }
+        else if (this._where.length > 1) {
+            throw new error("You can only chain one where() as your target column. Cannot chain more than 1");
+        }
+        else {
+            const Last_Where_Clause = this._where.pop();
+            this._params.pop();
+            // remove the "=" from the last where and will be replace by "LIKE" to have this
+            // format: WHERE column_name LIKE ?
+            //
+            // Assume format is this: WHERE column_name = ? then will change to WHERE column_name LIKE ?
+            const where = Last_Where_Clause.split('=')[0].trim();
+            this._where.push(`${where} LIKE ?`);
+            this._params.push(`%${value}%`);
+        }
         return this;
     }
 
