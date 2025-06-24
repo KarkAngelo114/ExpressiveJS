@@ -13,6 +13,7 @@ const createMigrationFile = require('./framework/migrationGenerator/migrationFil
 const {generateControllerFile} = require('./framework/controllerGenerator/controllerGenerator');
 const createModel = require('./framework/modelGenerator/modelFileGenerator');
 const generateRouteFile = require('./framework/routerGenerator/routeFileGenerator');
+const generateWorker = require('./framework/workerGenerator/generateWorker');
 const { init, proxy_setup } = require('./framework/ProjectInitiator/initiate');
 const {resetConfig} = require('./framework/ProjectInitiator/config');
 const { serve } = require('./framework/serve_app/serveJS');
@@ -59,6 +60,9 @@ else if (arg1 === "generate-controller:") {
 }
 else if (arg1 === "generate-route:") {
     generateRouteFile(arg2);
+}
+else if (arg1 === "generate-worker:") {
+    generateWorker(arg2);
 }
 else if (arg1 === "initiate-setup") {
     if (arg2 === "--proxy") {

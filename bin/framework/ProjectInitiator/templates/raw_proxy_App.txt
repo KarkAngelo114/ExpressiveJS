@@ -11,6 +11,8 @@ const cors = require('cors');
 // Express default Configs
 let port = Number(process.env.PORT) || 3001;
 let server_host = Number(process.env.SERVERHOST);
+let workerRegistration = require('./applications/server-workers/registerWorker');
+workerRegistration();
 
 let cors_option = {
     

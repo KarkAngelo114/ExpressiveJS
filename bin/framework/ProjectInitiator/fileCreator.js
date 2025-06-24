@@ -25,7 +25,9 @@ const filesToCreate = [
     ['rawViewsTxt.txt', 'views/views.txt'],
     ['rawSession.txt', 'sessions/sessions.config.js'],
     ['rawTokenizer.txt', 'applications/tokenizer.js'],
-    ['rawJaccard.txt', 'applications/jaccard-computation.js']
+    ['rawJaccard.txt', 'applications/jaccard-computation.js'],
+    ['rawScheduler.txt', 'applications/server-workers/scheduler.js'],
+    ['rawRegisterWorker.txt', 'applications/server-workers/registerWorker.js']
 ];
 
 const emptyFilesToCreate = [

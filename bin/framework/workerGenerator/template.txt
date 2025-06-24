@@ -1,0 +1,15 @@
+// This is your worker file
+
+const {parentPort} = require('worker_threads'); 
+
+const runApp = async () => {
+    
+    // your processes or tasks here
+
+    const message = ''; // you message here telling this worker is done
+    parentPort.postMessage(message);
+};
+
+
+runApp();
+

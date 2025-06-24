@@ -1,7 +1,7 @@
 // This is an auto created file. DO NOT DELETE/EDIT/MODIFY THIS
 
 
-const Querex = require('./MySQL/Querex');
+const Querex = require('./Querex');
 
 const onCreate = async () => {
     try {
