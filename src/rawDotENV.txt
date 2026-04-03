@@ -1,0 +1,45 @@
+#### This is your .env files where credentials will be store
+#### Do not include this to push to production or pushing to github
+#### Do not alter anything to avoid unexpected errors in reading your .env file
+#### You may add more credentials, but ensure that they are properly loaded to you scripts
+
+# MYSQL
+MYSQLHOST='0.0.0.0'
+MYSQLUSER="root"
+MYSQLPASSWORD=""
+MYSQLDATABASE="expressivejs"
+PORT=3000
+MYSQLPORT=3306
+
+SERVERHOST = '0.0.0.0'
+CONNECTIONTIMEOUT=60000
+
+CLIENT_APP_URL = 'http://localhost:3000'
+
+# Cloudinary credentials
+CLOUDINARY_CLOUD_NAME=''
+CLOUDINARY_API_KEY=''
+CLOUDINARY_API_SECRET=''
+
+## GMAIL CREDENTIALS
+## For EMAIL_SENDER_PASSWORD, you need app password configured on your Google Account first. 
+## Go to myaccount.google.com/security (https://myaccount.google.com/security) >> 2-Step Verification >> App passwords.
+## then create your app passwords.
+EMAIL_SENDER=''
+EMAIL_SENDER_PASSWORD=''
+
+# Keys
+API_KEY=''
+JWT_TOKEN=''
+PUBLIC_API_KEY=''
+
+# MailJet credentials
+MAIL_JET_API_KEY=''
+MAIL_JET_SECRET_KEY=''
+MAIL_JET_SENDER_EMAIL=''
+
+# Environment type (change this to "prod" if on production environment and/or before deployment)
+ENVIRONMENT="local"
+
+# to use the integrative AI module (go to: https://apifreellm.com/en to get your API key and put it here)
+INTEGRATIVE_AI_API_KEY=''

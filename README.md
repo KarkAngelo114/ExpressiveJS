@@ -4,7 +4,7 @@ ExpressiveJS is a backend framework for web-development built on top of NodeJS a
 and the ExpressJS framework itself (including some of it's middlewares and other applications), stream-lining rapid development and improve productivity. And with the help of this framework, it modularize everything, keeping things organized and code clarity. ExpressiveJS follows the MVC (Model-View-Controller) architecture, allowing developers to have a clear separation of concerns, especially on debugging.
 
 ## How to start?
-1. You can download the source inside the bin folder or the zip file. Recommended to download the zipped one as it is the cleaned-up version. Mostly there will be bugs when downloading the raw files as the developer keeps committing updates/changes. The one's inside the zip file are the finalized version.
+1. Download and place the zip file in your project directory.
 
 2. Place the zip file or the source code to your project directory and unzip it there. You will get the ExpressiveCLI and the framework folder which contains the internal workings of the application.
 
@@ -14,7 +14,13 @@ and the ExpressJS framework itself (including some of it's middlewares and other
 node expressivecli initiate-setup
 ```
 
-this will setup your project automatically - creating folders, generating ready-to-use JS files, .env, .gitignore, App.js, and etc. so you don't need to create folders and other files.
+this will setup your project automatically - creating folders, generating ready-to-use JS files, .env, .gitignore, App.js, and etc. so you don't need to create folders and other files. For setting up a project that doesn't need database, add a flag `--no-db`:
+
+```bash
+node expressivecli initiate-setup --no-db
+```
+
+This is will setup a project that doesn't have database.
 
 4. Once everything is setup, explore and familiarize. Execute:
 

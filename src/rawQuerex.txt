@@ -1,0 +1,800 @@
+const mysql = require('mysql2/promise');
+const {VarChar} = require('../../applications/regex');
+const db_conn = require('./pool');
+const mysql2 = require('mysql2');
+require('dotenv').config();
+
+/**
+ * Querex query builder. Use this in chaining methods to construct MySQL statements instead of using raw SQL statements
+ * 
+ * 
+ * @class
+ *  
+ */
+
+class Querex {
+    constructor() {
+        this._select = '*';
+        this._from = '';
+        this._where = [];
+        this._params = [];
+        this._insertValues = null;
+        this._db_name = '';
+        this._table_name = '';
+        this._table_columns = [];
+        this.debugMode = false;
+        this.forceExecute = false;
+        this.lock = false;
+        this.debugFrequency = false;
+        this._groupBy = [];
+    }
+
+    /**
+     * 
+     * 
+     * 
+     * @async
+     * @function
+     * @throws {Error} If there are problem/s executing the SQL statement to create a database (eg: not connected to the database host, incorrect MySQL credentials, local development server not running, etc.)
+     */
+
+    async createDatabase() {
+        this.#_isLocked();
+        this._db_name = process.env.MYSQLDATABASE;
+        const rawSQL = `CREATE DATABASE IF NOT EXISTS ${mysql2.escapeId(this._db_name)}`;
+        const isValid = VarChar().NoSpace(this._db_name);
+        if (!isValid) {
+            throw new Error("[X]------- Invalid database name: No special characters allowed");
+        }
+
+        try {
+            const tempConn = await mysql.createConnection({
+                host: process.env.MYSQLHOST,
+                user: process.env.MYSQLUSER,
+                password: process.env.MYSQLPASSWORD,
+                port: process.env.MYSQLPORT
+            });
+
+            if (this.debugMode) {
+                console.log(`[Debug]: ${rawSQL}`);
+            }
+            else {
+                await tempConn.query(rawSQL);
+                await tempConn.end();
+            }   
+            
+        } catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
+        }
+    }
+
+    /**
+     * 
+     * 
+     * @async
+     * @method createTable()
+     * @param {String} name - the table name
+     * @param {Array.<string>} columns - the column names for your table
+     * @throws {Error} if the table name is invalid or failed to execute the query because of MySQL related problems.
+     * 
+     * 
+     */
+
+    async createTable(name, columns) {
+        this.#_isLocked();
+        this._table_name = name;
+        this._table_columns = columns;
+        let rawSQL = '';
+
+        const isValid = VarChar().NoSpace(this._table_name);
+
+        if (!isValid) {
+            throw new Error("[X]------- Invalid table name: No special characters allowed");
+        }
+
+        try {
+            rawSQL = 'CREATE TABLE IF NOT EXISTS ' + mysql2.escapeId(this._table_name) + ' (' + this._table_columns.join(', ') + ')';
+            if (this.debugMode) {
+                console.log(`[Debug]: ${rawSQL}`);
+            }
+            else {
+                await db_conn.query(rawSQL);
+            }
+        }
+        catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
+        }
+    }
+
+    /**
+     * 
+     * 
+     * @method table()
+     * @param {String} _tableName - the table name in your database
+     * 
+     * the table() method allows you to select a table by passing the table name. Can be chain with .select(), .where(), .get(), .all(), etc.
+     * Attempting to chain another table() will override the first string passed to this method.
+     */
+    
+    table(_tableName) {
+        this.#_reset();
+        this._from = _tableName;
+        return this;
+    }
+
+    /**
+     * 
+     * @method debug()
+     * 
+     * The debug() method allows you to chain before other methods use to Construct SQL queries. It is use to log the raw SQL query before actual execution.
+     */
+    debug() {
+        this.debugMode = true;
+        return this;
+    }
+
+    /**
+     * 
+    @method debugFrequency();
+
+    The debugFreq() method allows to you to chain before other methods. It is used to debug the output of the getFreq() method when working with numerical data on the database.
+
+     */
+    debugFreq() {
+        this.debugFrequency = true;
+        return this;
+    }
+
+    /**
+     * 
+     * @method forceExec()
+     * 
+     * The forceExec() method allows you chain before other methods use to Construct SQL queries. It is use to force execute SQL queries that Querex doesn't allows you to (eg: using update() or delete() without where(0)).
+     * But be cautious when using this method as it will bypass the SQL query restriction. Consider using debug() first.
+     * 
+     */
+
+    forceExec() {
+        this.forceExecute = true;
+        return this;
+    }
+
+    /**
+     * 
+     *
+     * @method select()
+     * @param {Array.<string>} fields - Array of column names to be use for MySQL select statements
+     *  
+     * the select() method allows you to filter out which columns you want to get data from - equivalent to MySQL's SELECT column1, column2, column3 and so on.
+     * Can be chain with .get(), .all, .where(), etc.
+     */
+    select(fields) {
+        this.#_isLocked();
+        if (Array.isArray(fields)) {
+            this._select = fields.join(', ');
+        } else {
+            this._select = fields;
+        }
+        return this;
+    }
+
+
+    /**
+     * @method where()
+     * @param {String} field - the column name
+     * @param {String} value - the value corresponds to the field (Similar to SQL's WHERE column_name = value)
+     * 
+     * The where() method allow you chain more where() methods and chain it with get() method which is equivalent of SQL's WHERE column1 = value1 AND column2 = value2 and so on
+     * 
+     */
+
+    where(field, value) {
+        this.#_isLocked();
+        this._where.push(`${field} = ?`);
+        if (value) {
+            this._params.push(value);
+            return this;
+        }
+        else {
+            this._params.push("EMPTY");
+            return this;
+        }
+    }
+
+
+    /**
+     * Modifies the last WHERE clause to use the SQL `LIKE` operator instead of `=`,
+     * allowing for pattern matching on the specified column.
+     * 
+     * The provided value is wrapped with `%` wildcards to match any substring.
+     * Throws an error if no WHERE clause has been specified prior to calling this method.
+     *
+     * @param {string} value - The value to match against the column using the `LIKE` operator.
+     * @returns {this} Returns the current query builder instance for method chaining.
+     * @throws {Error} Throws an error if no columns have been specified in the WHERE clause.
+     */
+    like(value) {
+        this.#_isLocked();
+        if (this._where.length == 0) {
+            throw new error("No Columns specified");
+        }
+        else if (this._where.length > 1) {
+            throw new error("You can only chain one where() as your target column. Cannot chain more than 1");
+        }
+        else {
+            const Last_Where_Clause = this._where.pop();
+            this._params.pop();
+            // remove the "=" from the last where and will be replace by "LIKE" to have this
+            // format: WHERE column_name LIKE ?
+            //
+            // Assume format is this: WHERE column_name = ? then will change to WHERE column_name LIKE ?
+            const where = Last_Where_Clause.split('=')[0].trim();
+            this._where.push(`${where} LIKE ?`);
+            this._params.push(`%${value}%`);
+        }
+        return this;
+    }
+
+
+    /**
+     * @method groupBy()
+     * @param {string} field 
+     * 
+
+     The groupBy() method allows you to group query results having the same value based on the target field or column
+
+     */
+    groupBy(field) {
+        this._groupBy.push(field);
+        return this;
+    }
+
+    /**
+     * @method where()
+     * @param {String} field - the column name
+     * @param {String} value - the value corresponds to the field
+     * 
+     * The exclude() method allows you to exclude a result from the query, even it passes the SQL query condition
+     * 
+     */
+
+    exclude(field, value) {
+        this.#_isLocked();
+        this._where.push(`${field} <> ?`);
+        this._params.push(value);
+        return this;
+    }
+
+    /**
+     * 
+     @method excludeMultiple()
+     @param {String} field - the column name
+     @param values - values to exclude
+
+     The excludeMultiple() allows you to exclude multiple datapoints even they passes the SQL query condition.
+     */
+
+    excludeMultiple(field, values) {
+        this.#_isLocked();
+        const placeholders = values.map(() => '?').join(', ');
+        this._where.push(`${field} NOT IN (${placeholders})`);
+        this._params.push(...values);
+        return this;
+    }
+
+    /**
+     * Insert data into the table.
+     * @async
+     * @param {Object} dataObj - An object where keys are column names and values are the data to insert.
+     * @returns {Promise<void>} - Resolves when the data is inserted.
+     */
+    async insert(dataObj) {
+        this.#_isLocked();
+
+        if (typeof dataObj !== 'object' || Array.isArray(dataObj)) {
+            throw new Error("The insert method expects an object with column-value pairs.");
+        }
+
+        this._insertValues = Object.values(dataObj);
+        this._table_columns = Object.keys(dataObj);
+
+        return this.#_execInsert();
+    }
+
+    /**
+     * @async
+     * @method all()
+     * @returns {Array} - The result of the query;
+     * 
+     * The all() method allows you to retrieve data from the table you selected. Must specify the table name first (using table() method). Optional: can be chain with select() method
+     */
+
+    async all() {
+        this.#_isLocked();
+        let rawSQL = ''
+        try {
+            rawSQL = `SELECT ${this._select} FROM ${this._from}`;
+
+            if (this._groupBy.length > 0) {
+                rawSQL += ` GROUP BY `+this._groupBy.join(', ');
+            }
+
+            if (this.debugMode) {
+                console.log(`[Debug]: ${rawSQL}`);
+                return;
+            }
+            else if (this.debugFrequency) {
+                const [results] = await db_conn.query(rawSQL);
+                this.lock = true;
+                return results;
+            }
+            else {
+                const [results] = await db_conn.query(rawSQL);
+                this.lock = true;
+                return results;
+            }
+            
+        }
+        catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
+        }
+        
+    }
+
+    /**
+     * @async
+     * @method get()
+     * @returns The result the query
+     * 
+     * The get() method allows you to get the specific data you are querying. Often chain after where() method.
+     */
+
+    async get() {
+        this.#_isLocked();
+        let rawSQL = ''
+        try {
+            rawSQL = `SELECT ${this._select} FROM ${this._from}`;
+
+            if (this._where.length) {
+                rawSQL += ' WHERE '+this._where.join(' AND ');
+            }
+
+            if (this._groupBy.length > 0) {
+                rawSQL += ` GROUP BY `+this._groupBy.join(', ');
+            }
+
+            if (this.debugMode) {
+                console.log(`[Debug]: ${rawSQL}`);
+            }
+            else {
+                const [results] = await db_conn.query(rawSQL, this._params);
+                this.lock = true;
+                return results;
+            }
+        }
+        catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
+        }
+    }
+
+    /**
+    
+    @async
+    @method first()
+    @returns The first occurring result of the query
+
+    The first() method allows you to extract the first result of the query. Similar to get(), you wuuld need to use where() to do filtering.
+    But instead of getting all the result that matches to the query, it will only return the first occurring result.
+    
+     */
+     async first() {
+        let rawSQL = '';
+        try {
+            rawSQL += `SELECT ${this._select} FROM ${this._from}`;
+
+            if (this._where.length > 0) {
+                rawSQL += ' WHERE ' + this._where.join(' AND ');
+            }
+
+            if (this._groupBy.length > 0) {
+                rawSQL += ` GROUP BY `+this._groupBy.join(', ');
+            }
+
+            rawSQL += ' LIMIT 1';
+            
+            if (this.debugMode) {
+                console.log(`[DEBUG] ${rawSQL}`);
+            }
+            else {
+                const [results] = await db_conn.query(rawSQL, this._params);
+                this.lock = true;
+                return results[0];
+            }
+
+        }
+        catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
+        }
+     }
+
+    /**
+     * @async
+     * @method update()
+     * @param {Object} dataObj - a set having their keys with values. The keys represents the Column names and their corresponding values are the value to be use in updating
+     * @throws {Error} - If not chained with where() or the set is empty, throws an error.
+     * 
+     * The update() method allows you to perform updates on your database. Querex doesn't allows you to perform updates if there's no WHERE clause (using where() method) chained, 
+     * unless you chained with forceExec() method before constructing SQL query. Consider using debug() method first if you're unsure with your query.
+     * Using update() alone translate to this SQL query: UPDATE table_name SET column_name = value which updates all under that column. Querex also doesn't allow to pass empty set
+     * As it will update the data as empty or NULL. For safety, chain the update() method after where() method/s.
+     */
+
+    async update(dataObj) {
+        this.#_isLocked();
+        let rawSQL = '';
+        try {
+            // Validate input
+            if (!dataObj || Object.keys(dataObj).length === 0) {
+                throw new Error(`[WARNING]------- No data provided to update`);
+            }
+
+            const setFields = Object.keys(dataObj).map(key => `${key} = ?`).join(', ');
+            const setValues = Object.values(dataObj);
+
+            rawSQL = `UPDATE ${this._from} SET ${setFields}`;
+
+            // Append WHERE clause if exists
+            const hasWhere = this._where.length > 0;
+            if (hasWhere) {
+                rawSQL += ' WHERE ' + this._where.join(' AND ');
+            }
+
+            // Handle unsafe SQL
+            const isUnsafe = !hasWhere;
+
+            if (this.debugMode) {
+                console.log(`[Debug]: ${rawSQL}`);
+                return;
+            }
+
+            if (isUnsafe && !this.forceExecute) {
+                throw new Error(`[WARNING]------- Unsafe SQL operation: No WHERE clause specified for UPDATE query. Use "where()" or chain forceExec().`);
+            }
+
+            // Execute query
+            const queryParams = [...setValues, ...this._params];
+            await db_conn.query(rawSQL, queryParams);
+            this.lock = true;
+        } catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err}`);
+        }
+    }
+
+    /**
+     * 
+    @async
+    @method increment()
+    @param {String} fields - target column that holds numerical values
+    @param {Number} value - the value to increment the stored interger value. If the value is not set, it is set to default by 1
+    @throws {Error} throws an error
+
+    The increment() method allows to update the numerical data stored in a column and increment them by the value being passed (default is 1).  This is a form of updating data 
+    to the database, therefore, Querex doesn't allow the use of increment() method directly without the use WHERE clause to avoid mass updates.
+    Consider chaining with where(). If you are certain you need to update all, you can chain the increment() method with forceExec() to bypass
+    the restriction.
+
+     */
+
+    async increment(field, value = 1) {
+        this.#_isLocked();
+        let rawSQL = '';
+
+        try {
+            rawSQL += `UPDATE ${this._from} SET ${field} = ${field} + ?`;
+
+            if (this._where.length > 0) {
+                rawSQL += ' WHERE ' + this._where.join(' AND ');
+            }
+
+            if (!this.debugMode && !this.forceExecute && this._where.length == 0) {
+                throw new Error(`[WARNING]------- Unsafe SQL operation: No WHERE clause specified for UPDATE query. Use "where()" or chain forceExec().`);
+            }
+            else if (this.debugMode) {
+                console.log(`[DEBUG]: ${rawSQL}`);
+            }
+            else {
+                const params = [value, ...this._params];
+                await db_conn.query(rawSQL, params);
+                this.lock = true;
+            }
+        }
+        catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
+        }
+    }
+
+    /**
+     * 
+    @async
+    @method decrement()
+    @param {String} fields - target column that holds numerical values
+    @param {Number} value - the value to decrement the stored interger value. If the value is not set, it is set to default by 1
+    @throws {Error} throws an error
+
+    The decrement() method allows to update the numerical data stored in a column and decrement them by the value being passed (default is 1.  This is a form of updating data 
+    to the database, therefore, Querex doesn't allow the use of increment() method directly without the use of WHERE clause to avoid mass updates.
+    Consider chaining with where(). If you are certain you need to update all, you can chain the decrement() method with forceExec() to bypass
+    the restriction.
+
+     */
+
+    async decrement(field, value = 1) {
+        this.#_isLocked();
+        let rawSQL = '';
+
+        try {
+            rawSQL += `UPDATE ${this._from} SET ${field} = ${field} - ?`;
+
+            if (this._where.length > 0) {
+                rawSQL += ' WHERE ' + this._where.join(' AND ');
+            }
+
+            if (!this.debugMode && !this.forceExecute && this._where.length == 0) {
+                throw new Error(`[WARNING]------- Unsafe SQL operation: No WHERE clause specified for UPDATE query. Use "where()" or chain forceExec().`);
+            }
+            else if (this.debugMode) {
+                console.log(`[DEBUG]: ${rawSQL}`);
+            }
+            else {
+                const params = [value, ...this._params];
+                await db_conn.query(rawSQL, params);
+                this.lock = true;
+            }
+        }
+        catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err}`);
+        }
+    }
+
+    /**
+     * 
+     * @async
+     * @method delete()
+     * @throws {Error} - when there's no WHERE clause or is empty.
+     * 
+     * The delete() allows you to perform deletion of data to your database. Querex doesn't allow you to perform deletion if not chained after where() method/s
+     * unless you chained with forceExec() method before constructing SQL query. Consider using debug() method first if you're unsure with your query.
+     */
+
+    async delete() {
+        this.#_isLocked();
+        let rawSQL = '';
+        try {
+            rawSQL = `DELETE FROM ${this._from}`;
+
+            const hasWhere = this._where.length > 0;
+            if (hasWhere) {
+                rawSQL += ' WHERE ' + this._where.join(' AND ');
+            }
+
+            const isUnsafe = !hasWhere;
+
+            if (this.debugMode) {
+                console.log(`[Debug]: ${rawSQL}`);
+                return;
+            }
+
+            if (isUnsafe && !this.forceExecute) {
+                throw new Error('[WARNING]------- Unsafe SQL operation: No "WHERE" clause in the DELETE query. Use where() or chain forceExec().');
+            }
+
+            await db_conn.query(rawSQL, this._params);
+            this.lock = true;
+        } catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err}`);
+        }
+    }
+
+    /**
+     * @async
+     * @method count()
+     * @returns {Promise<number>} - The number of rows matching the query.
+     * @throws {Error} If the query fails to execute.
+     * 
+     * The count() method allows you to retrieve the number of rows in the selected table, optionally filtered by any chained where() conditions.
+     * Use this method to perform SQL COUNT queries in a fluent, chainable way.
+     */
+    async count() {
+        this.#_isLocked();
+        let rawSQL = '';
+        try {
+            let countTarget = '*';
+
+            if (this._select !== '*') {
+                const selectedFields = this._select.split(',').map(s => s.trim());
+
+                if (selectedFields.length > 1) {
+                    throw new Error(`[ERROR]------- SQL COUNT() accepts only one column or '*'. You've selected multiple: (${this._select})`);
+                }
+            }
+
+            rawSQL = `SELECT COUNT(${countTarget}) AS count FROM ${this._from}`;
+
+            if (this._where.length > 0) {
+                rawSQL += ' WHERE ' + this._where.join(' AND ');
+            }
+
+            if (this._groupBy.length > 0) {
+                rawSQL += ` GROUP BY `+this._groupBy.join(', ');
+            }
+
+            if (this.debugMode) {
+                console.log(`[Debug]: ${rawSQL}`);
+                return;
+            }
+            else if (this.debugFrequency) {
+                const [rows] = await db_conn.query(rawSQL, this._params);
+                this.lock = true;
+                this.#_reset();
+                return rows[0]?.count ?? 0;
+            }
+            else {
+                const [rows] = await db_conn.query(rawSQL, this._params);
+                this.#_reset();
+                this.lock = true;
+                return rows[0]?.count ?? 0;
+            }
+            
+        } catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err}`);
+        }
+    }
+
+
+    /**
+     * Calculates the frequency (as a percentage) of rows in the database where a specific column matches a given value.
+     *
+     * @async
+     * @param {boolean} [toFloat=true] - If true, returns the frequency as a float; otherwise, returns a rounded integer.
+     * @param {string} targetColumn - The name of the column to search for the target value.
+     * @param {any} targetValue - The value to match in the target column.
+     * @returns {Promise<number>} The frequency percentage of matching rows, as a float or integer based on `toFloat`.
+     * @throws {Error} If `targetColumn` or `targetValue` is not provided.
+     */
+    async getFrequency(toFloat = true, targetColumn, targetValue) {
+        this.lock = false;
+
+        if (!targetColumn || !targetValue) {
+            throw new Error("[ERROR]------- 'targetColumn' and 'targetValue' must be provided to count the total rows in a field.");
+        }
+
+        let rawSQL = `SELECT ${this._select} FROM ${this._from} WHERE ${targetColumn} = ?`;
+        const [query_result] = await db_conn.query(rawSQL, [targetValue]);
+
+        this.lock = false;
+        const count_result = await this.count();
+
+        let frequency;
+
+        const total = query_result?.length ?? 0;
+        if (total > 0) {
+            frequency = (count_result * 100) / total;
+        }
+        else {
+            frequency = 0;
+        }
+        
+        if (this.debugFrequency) {
+            console.log(`Total datapoints: ${total}`);
+            console.log(`Total count of the occurence: ${count_result}`);
+            console.log("\n===========================");
+            console.log(`Formula: F = (${count_result} X 100) / ${total}\n`)
+            console.log(`Output: ${frequency} or ${Math.round(frequency).toFixed(2)}%`);
+        } else {
+            if (toFloat) {
+                this.lock = true;
+                return frequency;
+            } else {
+                this.lock = true;
+                return Math.round(frequency);
+            }
+        }
+    }
+
+    /**
+     * 
+     * @param {*} month Using target month to filter data based JavaScript's Date month (0-11). JavaScript's Date month is 0-11, columns that holds date values MONTH() is 1-12.
+     * @param {String} column_name Target column name that holds date values
+     * 
+     * When passing a month value, make sure to adjust the month value when using JavaScript's date object. Ensure that you increment the month value by 1 before passing it to this method.
+     */
+    targetMonth(month, column_name) {
+        try {
+            this.lock = false;
+
+            if (!month || !column_name) {
+                throw new Error('No target or column name specified');
+            }
+
+            this._where.push(`MONTH(${column_name}) = ?`);
+            this._params.push(month); 
+            return this;
+        }
+        catch (error) {
+            console.error(`[X]-------  ${error}`);
+        }
+    }
+
+    /**
+     * 
+     * @param {*} year Using target year to filter data based on a specific year
+     * @param {String} column_name the column name that holds date values
+     * 
+     * The targetYear() method allows you to filter data based on a specific year from a column that holds date values.
+     */
+    
+    targetYear(year, column_name) {
+        try {
+            this.lock = false;
+            if (!year || !column_name) {
+                throw new Error('No target year or column name specified');
+            }
+            this._where.push(`YEAR(${column_name}) = ?`);
+            this._params.push(year); 
+            return this;
+        }
+        catch (error) {
+            console.error(`[X]------- ${error}`)
+        }
+    }
+
+    //================== private methods ==================
+
+    async #_execInsert() {
+        this.#_isLocked();
+        let rawSQL = '';
+        try {
+            const columns = this._table_columns.join(', ');
+            const placeholders = this._insertValues.map(() => '?').join(', ');
+            rawSQL = `INSERT INTO ${this._from} (${columns}) VALUES (${placeholders})`;
+
+            if (this.debugMode) {
+                console.log(`[Debug]: ${rawSQL}`);
+            } else {
+                await db_conn.query(rawSQL, this._insertValues);
+                this.lock = true;
+            }
+        } catch (err) {
+            console.error(`[X] ------- Failed to execute query: ${rawSQL} \n${err.message}`);
+        }
+    }
+
+    #_reset() {
+        this._select = '*';
+        this._from = '';
+        this._where = [];
+        this._params = [];
+        this._insertValues = null;
+        this._db_name = '';
+        this._table_name = '';
+        this._table_columns = [];
+        this.forceExecute = false;
+        this.lock = false;
+        this.debugMode = false;
+        this.debugFrequency = false;
+        this._groupBy = [];
+    }
+
+    #_isLocked() {
+        try {
+            if (this.lock) {
+                throw new Error("[LOCKED]------- SQL query builder currently locked to execute the current query.");
+            }
+        }
+        catch (error) {
+            console.error(error.message);
+        }
+    }
+}
+
+module.exports = new Querex();

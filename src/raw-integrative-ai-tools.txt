@@ -1,0 +1,18 @@
+/**
+ * 
+ * @param {Array<Object>} data - array of objects containing key value pairs
+ * @returns a string
+ */
+const ObjectArrayToString = (data) => {
+
+    const parsed = [];
+    for (let i = 0; i < data.length; i++) {
+        const parse = Object.entries(data[i]).map(([key, value]) => `${key}: ${value}`).join(', ');
+        parsed.push(parse);
+    }
+    
+
+    return parsed.join('; \n');
+}
+
+module.exports = ObjectArrayToString;

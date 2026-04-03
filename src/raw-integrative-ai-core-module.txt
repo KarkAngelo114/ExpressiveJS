@@ -1,0 +1,159 @@
+require('dotenv').config();
+
+/**
+ * An LLM-powered integrative AI module that uses AI API endpoint from `apifreellm`
+ * 
+ * To use this module, you must get your API key by signing in to their website: https://apifreellm.com
+ */
+
+class Integrative_AI {
+    constructor() {
+        this.apiKey = process.env.INTEGRATIVE_AI_API_KEY;
+        this.endpoint = "https://apifreellm.com/api/v1/chat";
+        this.plain_text_task = null;
+        this.rules = ["Rules:"];
+        this.history_context = [];
+        this.history_context_length = 5;
+        this.save_history = false;
+    }
+
+    /**
+     * @method configure
+     * @param {Object} config 
+     * @param {Number} config.history_context_length - the length of context history for the AI to remember past prompt and response. Default is 5.
+     * @param {Boolean} config.save_history - If set to true, prompt and response will be saved as past context
+     */
+    configure(config) {
+        this.endpoint = config.api_url || this.endpoint;
+        this.history_context_length = config.history_context_length || 5;
+        this.save_history = config.save_history || false;
+    }
+
+
+    /**
+     * @method setRules() - This allows you to customized rules for your AI - how it introduced itself, character, behavior, etc.
+     * @param {Array<String>} rules an array of rules set for your AI 
+     *
+     * 
+     * @example
+     * setRule([
+     *      "You are <chatbot-name>",
+     *      "You are excellent in <what field>",
+     *      "Do not <your rules>"
+     *      // add more rules
+     * ])
+     */
+    setRules(rules =[]) {
+        if (rules.length <= 0) throw new Error("No rules provided");
+
+        for (let i = 0; i < rules.length; i++) {
+            this.rules.push(rules[i])
+        }
+
+    }
+
+    /**
+     * @method setTask() - This allows you to instruct your AI what it will do after receiving prompt or a data in plain text
+     * @param {String} task - plain text instruction 
+     */
+    setTask(task) {
+        this.plain_text_task = task || null;
+    }
+
+    /**
+     * @method send() - This allows you to feed data to AI for processing and receive a response.
+     * @param {String} message - data to be sent as payload. This can be a normal prompt or a data to analyze
+     * @returns {Object} {
+                status: response.status,
+                success: data.success,
+                response: data.response,
+                raw: data
+            }
+     */
+
+    async send(message) {
+
+        if (!this.apiKey) {
+            return {
+                error: 'API key not configure. Please check your .env'
+            }
+        }
+
+        if (this.history_context.length > this.history_context_length) {
+            this.history_context.shift(); // removed the very first element
+        }
+
+        try {
+            const response = await fetch(this.endpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${this.apiKey}`
+                },
+                body: JSON.stringify({ message: message ? `
+                =========================================
+                (IMPORTANT!) SYSTEM_RULES: ${this.rules.join('; \n')}
+                =========================================
+
+                =========================================
+                (FOLLOW THE TASK IF SPECIFIED) TASK: ${this.plain_text_task || "No specific task. Refer to user prompt"}
+                =========================================
+                
+                =========================================
+                PREVIOUS CONTEXT: ${this.history_context.join('; \n') || "No Previous Past Context yet. Refer to user prompt"}
+                =========================================
+
+                =========================================
+                ${this.save_history ? "You can remember past context":"You are not configured to remember."}
+                =========================================
+
+                =========================================
+                USER PROMPT: ${message}
+                =========================================
+                `:`
+                =========================================
+                SYSTEM: ${this.rules.join('; \n')}
+                =========================================
+
+                =========================================
+                USER PROMPT: Hello 👋
+                =========================================    
+                ` 
+                })
+            });
+
+            const data = await response.json();
+
+            if (this.save_history) {
+                const context = {
+                    prompt:message,
+                    response: data.response,
+                    timestamp: new Date()
+                }
+
+                const parseString = Object.entries(context).map(([key, value]) => `${key}:${value}`).join(', ')
+                this.history_context.push(parseString);
+
+            }
+
+            return {
+                status: response.status,
+                success: data.success,
+                response: data.response,
+                raw: data,
+                error: data.error || 'none'
+            };
+
+        } catch (err) {
+
+            return {
+                error: err,
+                status: 500,
+                success: false,
+                error: err.message
+            };
+        }
+    }
+}
+
+module.exports = Integrative_AI;
