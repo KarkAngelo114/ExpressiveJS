@@ -22,6 +22,10 @@ exports.allowedCors = cors({
             callback(new Error('Not allowed by CORS'));
         }
     },
+    // credentials:true, /** uncomment this if you're working with cookies/session-based tokens */
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', /* add more methods */],
     allowedHeaders: ['Content-Type', 'Authorization', /* add more allowed headers */],
 });
+
+// DO NOT TOUCH THIS
+exports.tags = () => "1.0.2";
