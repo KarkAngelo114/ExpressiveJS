@@ -88,5 +88,38 @@
         ["rawViewsGitIgnore.txt", "views/.gitignore"],
         ["rawIndex.txt", "views/index.html"],
         ["rawViewsTxt.txt", "views/views.txt"]
+    ],
+    "db_deps": [
+        "express",
+        "cors",
+        "dotenv",
+        "mysql2",
+        "multer",
+        "cloudinary",
+        "multer-storage-cloudinary",
+        "nodemailer",
+        "express-rate-limit",
+        "bcrypt",
+        "express-session",
+        "jsonwebtoken",
+        "cookie-parser",
+        "express-mysql-session",
+        "node-mailjet"
+    ],
+    "no_db_deps": [
+        "express",
+        "cors",
+        "dotenv",
+        "express-rate-limit",
+        "multer",
+        "multer-storage-cloudinary",
+        "cloudinary",
+        "http-proxy",
+        "bcrypt",
+        "express-session",
+        "jsonwebtoken",
+        "cookie-parser",
+        "node-mailjet",
+        "nodemailer"
     ]
 }
