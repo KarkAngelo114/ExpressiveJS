@@ -1,5 +1,5 @@
 {
-    "version":"1.0.3",
+    "version":"1.0.2",
     "files_to_update":[
         ["raw-integrative-ai-core-module.txt", "applications/integrative-ai/main/core.js"],
         ["raw-integrative-ai-index.txt", "applications/integrative-ai/index.js"],
@@ -9,11 +9,10 @@
         ["rawLoggers.txt", "applications/loggers.js"],
         ["raw-cors.txt", "middlewares/cors.js"],
         ["raw-request-event-handler.txt", "middlewares/request-event-handler.js"],
-        ["rawQuerex.txt", "database/MySQl/Querex.js"],
-        ["",""]
+        ["rawQuerex.txt", "database/MySQl/Querex.js"]
     ],
     "dependencies":[],
-    "files_to_add":[
+    "1.0.2":[
         ["raw-integrative-ai-index.txt", "applications/integrative-ai/index.js"],
         ["raw-integrative-ai-package-json.txt", "applications/integrative-ai/package.json"],
         ["raw-integrative-ai-core-module.txt", "applications/integrative-ai/main/core.js"],
