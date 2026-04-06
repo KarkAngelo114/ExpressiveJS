@@ -14,6 +14,3 @@ exports.ObjectArrayToString = (data) => {
 
     return parsed.join('; \n');
 }
-
-// Change this to "false" if don't need this to be updated
-exports.Updatable = true;

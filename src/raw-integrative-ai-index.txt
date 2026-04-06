@@ -3,8 +3,5 @@ const ObjectArrayToString = require('./tools');
 
 module.exports = {
     IntegrativeAI,
-    ObjectArrayToString,
-    
-    // Change this to "false" if don't need this to be updated
-    Updatable: true
+    ObjectArrayToString
 }

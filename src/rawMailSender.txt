@@ -130,8 +130,5 @@ const MailSender = (recipientEmail, senderEmail, message, subject, replyTo = nul
 module.exports = { 
     MailSender,
     MailJet,
-    GMail_Sender,
-    
-    //Change this to "false" if don't need this to be updated
-    Updatable: true
+    GMail_Sender
 };

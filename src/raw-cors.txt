@@ -26,6 +26,3 @@ exports.allowedCors = cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', /* add more methods */],
     allowedHeaders: ['Content-Type', 'Authorization', /* add more allowed headers */],
 });
-
-// Change this to "false" if don't need this to be updated
-exports.Updatable = true;
