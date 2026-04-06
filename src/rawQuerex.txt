@@ -797,4 +797,9 @@ class Querex {
     }
 }
 
-module.exports = new Querex();
+module.exports = {
+    Querex
+    
+    // Change this to "false" if don't need this to be updated
+    Updatable: true;
+};

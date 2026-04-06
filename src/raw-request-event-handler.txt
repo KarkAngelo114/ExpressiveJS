@@ -40,3 +40,6 @@ exports.EventRequesthandler = (req, res, next) => {
 
     next();
 };
+
+// Change this to "false" if don't need this to be updated
+exports.Updatable = true;

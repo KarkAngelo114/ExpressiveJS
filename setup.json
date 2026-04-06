@@ -51,7 +51,7 @@
         ["rawLimiter.txt", "middlewares/express-rate-limit.js"],
         ["rawHeaderChecker.txt", "middlewares/headers.js"],
         ["rawProxyGuard.txt", "middlewares/proxyGuard.js"],
-        ["raw-request-event-hamdler.txt", "middlewares/request-event-hamdler.js"],
+        ["raw-request-event-handler.txt", "middlewares/request-event-handler.js"],
         ["rawUploader.txt", "middlewares/uploader.js"],
         ["rawSession.txt", "sessions/sessions.config.js"],
         ["rawViewsGitIgnore.txt", "views/.gitignore"],

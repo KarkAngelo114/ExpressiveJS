@@ -3,7 +3,7 @@
  * @param {Array<Object>} data - array of objects containing key value pairs
  * @returns a string
  */
-const ObjectArrayToString = (data) => {
+exports.ObjectArrayToString = (data) => {
 
     const parsed = [];
     for (let i = 0; i < data.length; i++) {
@@ -15,4 +15,5 @@ const ObjectArrayToString = (data) => {
     return parsed.join('; \n');
 }
 
-module.exports = ObjectArrayToString;
+// Change this to "false" if don't need this to be updated
+exports.Updatable = true;

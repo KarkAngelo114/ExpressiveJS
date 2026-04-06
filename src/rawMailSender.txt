@@ -131,4 +131,7 @@ module.exports = {
     MailSender,
     MailJet,
     GMail_Sender,
+    
+    //Change this to "false" if don't need this to be updated
+    exports.Updatable: true;
 };

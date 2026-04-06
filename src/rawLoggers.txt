@@ -43,3 +43,6 @@ exports.pushLogs = (data, eventName) => {
 exports.getLogs = () => {
     return logs;
 }
+
+// Change this to "false" if don't need this to be updated
+exports.Updatable = true;

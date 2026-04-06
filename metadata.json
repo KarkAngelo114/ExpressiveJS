@@ -1,10 +1,28 @@
 {
     "version":"1.0.3",
     "files_to_update":[
-        ["",""],
-        ["",""],
+        ["raw-integrative-ai-core-module.txt", "applications/integrative-ai/main/core.js"],
+        ["raw-integrative-ai-index.txt", "applications/integrative-ai/index.js"],
+        ["raw-integrative-ai-tools.txt", "applications/integrative-ai/tools/index.js"],
+        ["rawCloudinaryupload.txt", "applications/cloudinaryUpload.js"],
+        ["rawMailSender.txt", "applications/mailSender.js"],
+        ["rawLoggers.txt", "applications/loggers.js"],
+        ["raw-cors.txt", "middlewares/cors.js"],
+        ["raw-request-event-handler.txt", "middlewares/request-event-handler.js"],
+        ["rawQuerex.txt", "database/MySQl/Querex.js"],
         ["",""]
     ],
-    "dependencies":[]
+    "dependencies":[],
+    "files_to_add":[
+        ["raw-integrative-ai-index.txt", "applications/integrative-ai/index.js"],
+        ["raw-integrative-ai-package-json.txt", "applications/integrative-ai/package.json"],
+        ["raw-integrative-ai-core-module.txt", "applications/integrative-ai/main/core.js"],
+        ["raw-integrative-ai-core-package.txt", "applications/integrative-ai/main/package.json"],
+        ["raw-integrative-ai-tools.txt", "applications/integrative-ai/tools/index.js"],
+        ["rawLoggers.txt", "applications/loggers.js"],
+        ["raw-request-event-handler.txt", "middlewares/request-event-handler.js"],
+        ["raw-cors.txt", "middlewares/cors.js"]
+        
+    ]
 
 }
