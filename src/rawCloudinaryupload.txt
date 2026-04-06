@@ -192,5 +192,5 @@ module.exports = {
     cloudinaryDeleteByUrl
     
     //Change this to "false" if don't need this to be updated
-    Updatable:true;
+    Updatable:true
 };
