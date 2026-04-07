@@ -2,7 +2,9 @@
     "version":"1.0.2",
     "files_to_update":[
         ["rawQuerex.txt", "database/MySQl/Querex.js"],
-        ["rawDB_creator.txt", "database/MySQL/createDatabase.js"]
+        ["rawDB_creator.txt", "database/MySQL/createDatabase.js"],
+        ["rawRegisterWorker.txt", "applications/server-workers/registerWorker.js"],
+        ["rawScheduler.txt", "applications/server-workers/scheduler.js"]
     ],
     "files_to_delete": [],
     "dependencies":[],
