@@ -11,9 +11,7 @@
         ["raw-request-event-handler.txt", "middlewares/request-event-handler.js"],
         ["rawQuerex.txt", "database/MySQl/Querex.js"]
     ],
-    "files_to_delete": [
-        "applications/test.js"
-    ],
+    "files_to_delete": [],
     "dependencies":[],
     "1.0.2":[
         ["raw-integrative-ai-index.txt", "applications/integrative-ai/index.js"],
@@ -21,7 +19,6 @@
         ["raw-integrative-ai-core-module.txt", "applications/integrative-ai/main/core.js"],
         ["raw-integrative-ai-core-package.txt", "applications/integrative-ai/main/package.json"],
         ["raw-integrative-ai-tools.txt", "applications/integrative-ai/tools/index.js"],
-        ["rawTest.txt", "applications/test.js"],
         ["rawLoggers.txt", "applications/loggers.js"],
         ["raw-request-event-handler.txt", "middlewares/request-event-handler.js"],
         ["raw-cors.txt", "middlewares/cors.js"]   
