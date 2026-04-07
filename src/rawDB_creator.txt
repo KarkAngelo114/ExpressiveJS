@@ -5,7 +5,8 @@ const Querex = require('./Querex');
 
 const onCreate = async () => {
     try {
-        await Querex.createDatabase();
+        await new Querex().createDatabase();
+
     }
     catch (error) {
         console.error('[X]-------Failed to create database:', error);

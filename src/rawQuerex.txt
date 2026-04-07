@@ -797,6 +797,4 @@ class Querex {
     }
 }
 
-module.exports = {
-    Querex
-};
+module.exports = Querex;

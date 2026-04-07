@@ -1,7 +1,6 @@
 const { red, default_color, gray, yellow, green } = require("../colorCode/ANSI");
 const { serve } = require("../serve_app/serveJS");
 const { install } = require("../subprocess/dependencyInstaller");
-const { input, rl } = require("./cli");
 const { configure } = require("./config");
 const config = require('./config.json');
 const { createFolders } = require("./createFolders");
@@ -17,6 +16,7 @@ let baseUrl = "https://raw.githubusercontent.com/KarkAngelo114/ExpressiveJS/main
  */
 exports.Setup = async (flag1, flag2) => {
     try {
+        const { input, rl } = require("./cli");
         const isAlreadtSetup = config['has_Setup'];
 
         if (isAlreadtSetup) {

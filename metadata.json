@@ -9,7 +9,8 @@
         ["rawLoggers.txt", "applications/loggers.js"],
         ["raw-cors.txt", "middlewares/cors.js"],
         ["raw-request-event-handler.txt", "middlewares/request-event-handler.js"],
-        ["rawQuerex.txt", "database/MySQl/Querex.js"]
+        ["rawQuerex.txt", "database/MySQl/Querex.js"],
+        ["rawDB_creator.txt", "database/MySQL/createDatabase.js"]
     ],
     "files_to_delete": [],
     "dependencies":[],

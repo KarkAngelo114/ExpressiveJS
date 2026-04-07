@@ -79,8 +79,8 @@ exports.runCLI = async (args) => {
             break;
 
         case "--serve":
-            serve();
-            break;
+            return serve();
+            
 
         case "new":
             await resetConfig();

@@ -1,5 +1,5 @@
 {
     "version": "1.0.2",
     "has_Setup": false,
-    "has-db": false
+    "has-db": true
 }
