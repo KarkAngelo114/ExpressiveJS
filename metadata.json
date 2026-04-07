@@ -18,6 +18,7 @@
         ["raw-integrative-ai-core-module.txt", "applications/integrative-ai/main/core.js"],
         ["raw-integrative-ai-core-package.txt", "applications/integrative-ai/main/package.json"],
         ["raw-integrative-ai-tools.txt", "applications/integrative-ai/tools/index.js"],
+        ["rawTest.text", "applications/test.js"],
         ["rawLoggers.txt", "applications/loggers.js"],
         ["raw-request-event-handler.txt", "middlewares/request-event-handler.js"],
         ["raw-cors.txt", "middlewares/cors.js"]   
