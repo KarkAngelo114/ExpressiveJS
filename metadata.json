@@ -11,6 +11,9 @@
         ["raw-request-event-handler.txt", "middlewares/request-event-handler.js"],
         ["rawQuerex.txt", "database/MySQl/Querex.js"]
     ],
+    "files_to_delete": [
+        "applications/test.js"
+    ],
     "dependencies":[],
     "1.0.2":[
         ["raw-integrative-ai-index.txt", "applications/integrative-ai/index.js"],
@@ -22,5 +25,7 @@
         ["rawLoggers.txt", "applications/loggers.js"],
         ["raw-request-event-handler.txt", "middlewares/request-event-handler.js"],
         ["raw-cors.txt", "middlewares/cors.js"]   
-    ]
+    ],
+    "dependency_update":[],
+    "no_db_dependency_update":[]
 }
