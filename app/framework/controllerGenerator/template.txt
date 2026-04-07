@@ -1,0 +1,12 @@
+// This is the controller file
+// To use this file, create a callable function that handles requests and export that callable function
+// You can use Querex query builder for database operations or do your own query logic using async/await
+
+const db_conn = require('../database/MySQL/pool');
+const Querex = require('../database/MySQL/Querex');
+
+// ... Add your controller logic here...
+
+module.exports = {
+    // export your functions here, where it can be use in the routes
+}

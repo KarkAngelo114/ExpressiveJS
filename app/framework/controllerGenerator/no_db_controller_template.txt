@@ -1,0 +1,13 @@
+// This is the controller file
+// To use this file, create a callable function that handles requests and export that callable function
+
+const controller = async (req, res) => {
+
+}
+
+// ... Add your controller logic here...
+
+module.exports = {
+    controller
+    // export your functions here, where it can be use in the routes
+}

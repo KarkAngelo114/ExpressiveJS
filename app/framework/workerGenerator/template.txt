@@ -1,0 +1,22 @@
+// This is your worker file
+
+const {parentPort, workerData} = require('worker_threads'); 
+
+const runApp = async () => {
+    
+    // your processes or tasks here
+    // access the data being passed when scheduling your worker from registerWorker.js by using "workerData"
+    /**
+
+    const data = workerData; 
+    console.log(data);
+
+    */
+
+    const message = ''; // your message here telling this worker has ran the task
+    parentPort.postMessage(message);
+};
+
+
+runApp();
+

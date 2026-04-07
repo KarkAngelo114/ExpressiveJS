@@ -1,0 +1,24 @@
+// This is the route file
+// to use this file, ensure that you register this route in your App.js and import the necessary controller
+
+const express = require('express');
+const router = express.Router();
+const rate_limiter = require('../middlewares/express-rate-limit');
+const { allowedCors, publicCors } = require('../middlewares/cors'); // use any of the CORS module to protect your routes
+
+/**
+
+Import your functions from your controler from controllers folder
+const { GetuserInfo } = require('../controllers/MyFirstController);
+
+Create your routes here
+router.get(*your API endpoint*, *middlewares....*, *imported controller function here*);
+
+
+Example:
+router.get('/api/v1/user', allowedCors, rate_limiter, GetuserInfo);
+
+
+*/
+
+module.exports = router;

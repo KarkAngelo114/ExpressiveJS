@@ -1,0 +1,14 @@
+// This is your model file.
+// Here you, you can define your database schemas to be use in your controllers. 
+
+const db_conn = require('../database/MySQL/pool');
+const Querex = require('../database/MySQL/Querex');
+
+let table = ''; // define your table
+let columns = []; // define column names from your table
+
+// your database schema here . . .
+
+module.exports = {
+    // export your callable functions here
+}
