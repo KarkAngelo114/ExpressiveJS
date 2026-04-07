@@ -1,7 +1,7 @@
-const IntegrativeAI = require('./main');
+const {Integrative_AI} = require('./main');
 const ObjectArrayToString = require('./tools');
 
 module.exports = {
-    IntegrativeAI,
+    IntegrativeAI:Integrative_AI,
     ObjectArrayToString
 }
