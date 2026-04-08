@@ -27,7 +27,30 @@ app.use('/views', express.static(path.join(__dirname, 'views')));
 
 
 
-// ========= register your routes here =========
+// ========= register routes here ===========
+
+// Example:
+// let UserRoutes = require('./routes/UserRoutes');
+//
+// app.use(UserRoutes);
+// ensure that when registering routes, you use "app.use(myRoutes);"
+
+// ensure you applied appropriate CORS middlewares before your routes to avoid getting CORS error
+// you may also modify the "allowedCors" module according to your preferences
+/**
+    example usage:
+    const { allowedCors, publicCors } = require('./middlewares/cors');
+
+    * if both route1 and route2 are already routers*
+    app.use(allowedCors, route1);
+    app.use(publicCors, route2);
+
+    * otherwise if applying to specific path *
+    app.use('/api/endpoint1',allowedCors, route1);
+    app.use('/api/endpoint2'publicCors, route2);
+
+ */
+const { allowedCors, publicCors } = require('./middlewares/cors');
 
 
 
