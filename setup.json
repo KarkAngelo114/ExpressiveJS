@@ -61,7 +61,7 @@
     ],
     "no_db_setup": [
         ["raw_no_db_App.txt", "App.js"],
-        ["rawNODEMON.txt", "nodemon.json"],
+        ["raw_NODEMON.txt", "nodemon.json"],
         ["raw_DotENV.txt", ".env"],
         ["raw_GitIgnore.txt", ".gitignore"],
         ["rawREADME.txt", "README.md"],
