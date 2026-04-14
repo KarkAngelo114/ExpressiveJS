@@ -16,7 +16,8 @@
         ["raw-integrative-ai-tools.txt", "applications/integrative-ai/tools/index.js"],
         ["rawLoggers.txt", "applications/loggers.js"],
         ["raw-request-event-handler.txt", "middlewares/request-event-handler.js"],
-        ["raw-cors.txt", "middlewares/cors.js"]   
+        ["raw-cors.txt", "middlewares/cors.js"],
+        ["rawhttp.txt","applications/http.js"]
     ],
     "dependency_update":[],
     "no_db_dependency_update":[]

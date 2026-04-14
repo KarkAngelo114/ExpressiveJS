@@ -21,6 +21,7 @@ exports.configure = async (setup) => {
 
         pkg.scripts = {
             ...pkg.scripts,
+            "dev":"node expressivecli --serve",
             "start": "node App.js",
             "dev": "nodemon App.js",
             "build": "npm install"
