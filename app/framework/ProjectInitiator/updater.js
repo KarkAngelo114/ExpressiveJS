@@ -82,7 +82,6 @@ const add_files = async (array, has_database, json_content, json_file) => {
  * @param {*} flag 
  */
 const applyUpdate = async (src, flag) => {
-    // const local_hashes = require('./expressivejs-lock.json');
     const [source_file, local_path_to_file] = src;
     const json_file = path.join(__dirname, 'expressivejs-lock.json');
     let content = JSON.parse(await fs.readFile(json_file, 'utf-8')); // will be use to update hash if a target file is modified or using the "--force" flag
@@ -187,9 +186,11 @@ exports.initiateUpdate = async (flag) => {
         console.log(`${green} ✓ ${gray}[GET] ${baseUrl}/metadata.json ${default_color}`);
 
         const data = await response.json();
-        const files = data.files_to_update;
+        const versionKey = data.version;
+        const versionData = data[versionKey];
 
-        const files_to_add = data[data.version]; // using the latest version, we get the file
+        const files = versionData.files_to_update || []; // using the latest version as key, we get the array of files to update
+        const files_to_add = versionData.files_to_add || []; // using the latest version as key, we get the array of files to be added
 
         if (currentVersion === data.version) {
             console.log(`Everything is up to date`);
