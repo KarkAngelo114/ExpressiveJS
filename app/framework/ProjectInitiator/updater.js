@@ -189,7 +189,7 @@ exports.initiateUpdate = async (flag) => {
         const versionKey = data.version;
         const versionData = data[versionKey];
 
-        const files = versionData.files_to_update || []; // using the latest version as key, we get the array of files to update
+        const files_to_update = versionData.files_to_update || []; // using the latest version as key, we get the array of files to update
         const files_to_add = versionData.files_to_add || []; // using the latest version as key, we get the array of files to be added
 
         if (currentVersion === data.version) {
@@ -201,12 +201,12 @@ exports.initiateUpdate = async (flag) => {
         console.log(`New version: ${green}${data.version}${default_color}`);
         await delay(1000);
         console.log("Files to update:\n");
-        data.files_to_update.forEach(arr => console.log(`${yellow}${arr[1]}${default_color}`));
+         files_to_update.forEach(arr => console.log(`${yellow}${arr[1]}${default_color}`));
         await delay(1000);
         console.log("\nApplying update...\n");
         await delay(1000);
 
-        for (const arr of files) {
+        for (const arr of  files_to_update) {
             await applyUpdate(arr, flag);
         }
 
@@ -276,9 +276,9 @@ exports.checkUpdate = async () => {
 
         console.log(`${yellow}\n----------------------- ${default_color} Below are the other details what to update ${yellow}----------------------- ${default_color}`)
         console.log(`\nFiles to update:`);
-        data.files_to_update.forEach(file => console.log(`- ${file[1]}`));
+        data[data.version].files_to_update.forEach(file => console.log(`- ${file[1]}`));
         console.log(`\nFiles to add:`);
-        data[data.version].forEach(file => console.log(`- ${file[1]}`));
+        data[data.version].files_to_add.forEach(file => console.log(`- ${file[1]}`));
         
 
         if (data.files_to_delete.length > 0) {
