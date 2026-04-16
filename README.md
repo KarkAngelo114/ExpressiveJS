@@ -6,13 +6,13 @@ It follows a modular MVC-inspired architecture, helping developers build scalabl
 
 
 ## ✨ Key Features
-⚡ Rapid project scaffolding via CLI
-🧱 Modular architecture for clean separation of concerns
-🧭 MVC-inspired structure (Model–View–Controller)
-🔧 Built on top of Express.js ecosystem
-📁 Auto-generated project structure (folders, configs, boilerplate)
-🗄️ Optional database integration setup
-🧩 Extensible project generation system
+1. ⚡ Rapid project scaffolding via CLI
+2. 🧱 Modular architecture for clean separation of concerns
+3. 🧭 MVC-inspired structure (Model–View–Controller)
+4. 🔧 Built on top of Express.js ecosystem
+5. 📁 Auto-generated project structure (folders, configs, boilerplate)
+6. 🗄️ Optional database integration setup
+7. 🧩 Extensible project generation system
 
 
 ## 📦 Installation
@@ -70,44 +70,51 @@ ExpressiveJS follows a modular structure inspired by MVC principles:
 6. Applications - server application files you can usee in your controllers or any part of the project
 
 ## 📁 Project Structure (if has database)
-applications/
-controllers/
-database/
-framework/
-middlewares/
-models/
-node_modules/
-routes/
-sessions/
-uploads/
-views/
-.env
-.gitignore
-App.js
-expressiveCLI
-nodemon.json
-package-lock.json
-package.json
-README.md
+```
+.
+├── applications/
+├── controllers/
+├── database/
+├── framework/
+├── middlewares/
+├── models/
+├── node_modules/
+├── routes/
+├── sessions/
+├── uploads/
+├── views/
+├── .env
+├── .gitignore
+├── App.js
+├── expressiveCLI
+├── nodemon.json
+├── package-lock.json
+├── package.json
+└── README.md
+```
 
 ## 📁 Project Structure (no database setup)
-applications/
-controllers/
-framework/
-middlewares/
-node_modules/
-routes/
-sessions/
-uploads/
-views/
-.env
-.gitignore
-App.js
-expressiveCLI
-nodemon.json
-package-lock.json
-package.json
-README.md
+```
+.
+├── applications/
+├── controllers/
+├── framework/
+├── middlewares/
+├── node_modules/
+├── routes/
+├── sessions/
+├── uploads/
+├── views/
+├── .env
+├── .gitignore
+├── App.js
+├── expressiveCLI
+├── nodemon.json
+├── package-lock.json
+├── package.json
+└── README.md
+```
+
 
 
 ## 🔧 Requirements
