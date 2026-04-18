@@ -4,7 +4,7 @@
     "dependencies":[],
     "1.0.3": {
         "files_to_update":[
-            ["raw-session-config.txt", "sessions/sessions.config.js"],
+            ["raw-session-config.txt", "sessions/session-noSQL.js"],
             ["rawSession.txt", "sessions/sessions.config.js"]
         ],
         "files_to_add":[

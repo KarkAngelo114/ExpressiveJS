@@ -88,7 +88,7 @@
         ["rawProxyGuard.txt", "middlewares/proxyGuard.js"],
         ["raw-request-event-handler.txt", "middlewares/request-event-handler.js"],
         ["rawUploader.txt", "middlewares/uploader.js"],
-        ["raw-session-config.txt", "sessions/sessions.config.js"],
+        ["raw-session-config.txt", "sessions/session-noSQL.js"],
         ["rawViewsGitIgnore.txt", "views/.gitignore"],
         ["rawIndex.txt", "views/index.html"],
         ["rawViewsTxt.txt", "views/views.txt"]
