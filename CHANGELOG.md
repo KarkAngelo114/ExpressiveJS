@@ -1,6 +1,15 @@
 # CHANGELOG
 
 # v1.0.2
+### Changes and updates
+- updated session config files (now uses SESSION_SECRET)
+- updated auth.js (removed old API_AUTH.js middleware)
+
+### Deleted files
+- removed old API_AUTH.js middleware
+
+
+# v1.0.2
 ### Changes and Updates
 - CORS module has commented option
 - Integrative AI core module now exports object, not a singleton class anymore

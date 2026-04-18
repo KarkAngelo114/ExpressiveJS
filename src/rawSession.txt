@@ -1,7 +1,7 @@
 require('dotenv').config();
 const session = require('express-session');
 const MySQL_session_store = require('express-mysql-session')(session);
-let session_key = process.env.PUBLIC_API_KEY;
+let session_key = process.env.SESSION_SECRET;
 
 const sessionStore = new MySQL_session_store({
     host: process.env.MYSQLHOST,
@@ -12,17 +12,18 @@ const sessionStore = new MySQL_session_store({
     schema: {
         table: 'sessions',
         columnNames: {
-            session_id: 'Session_ID',
-            expires: 'Expires',
+            session_id: 'session_id',
+            expires: 'expires',
             data: 'data'
-        } 
+        }
     }
 });
 
 const sessionCreate = session({
-    secret: session_key || 'this_is_so_secret_123',
+    secret: session_key,
     store: sessionStore,
     resave: false,
+    rolling: true,
     saveUninitialized: false,
     cookie: {
         httpOnly: true,
