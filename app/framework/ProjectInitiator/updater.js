@@ -48,25 +48,52 @@ const add_files = async (array, has_database, json_content, json_file) => {
             return;
         }
 
-        // perform adding new files
+        let fileExists = true;
+
+        try {
+            await fs.access(local_path_to_file);
+        } catch (err) {
+            if (err.code === "ENOENT") fileExists = false;
+            else throw err;
+        }
+
         const source_file = `${baseUrl}/src/${src}`;
         const response = await fetch(source_file);
-        
+
         if (response.status == 404) throw new Error(`Error 404: File not found. File ${source_file} might have been moved, renamed, or deleted`);
         if (!response.ok) throw new Error(`Error: ${response.status} Failed to fetch`);
 
         const data = await response.text();
+        const new_hash = crypto.createHash('md5').update(data).digest('hex');
 
+        if (fileExists) {
+            const local_data = await fs.readFile(local_path_to_file, 'utf-8');
+            const local_hash = crypto.createHash('md5').update(local_data).digest('hex');
+
+            const saved_hash = json_content.hashes[local_path_to_file];
+
+            // CASE 1: file was modified by user, skip adding the incoming file. It will be a very huge mess if an already existing file is modified but got overwritten (assume the file is manually downloaded from the main repo before running an update)
+            if (saved_hash && local_hash !== saved_hash) {
+                console.log(`${skyBlue}Skipped (modified)... ${gray}${local_path_to_file}${default_color}`);
+                return;
+            }
+
+            //  CASE 2: identical to incoming, skip adding the file. Why add a file if there's already an existing one
+            if (local_hash === new_hash) {
+                console.log(`${skyBlue}Skipped (identical)... ${gray}${local_path_to_file}${default_color}`);
+                return;
+            }
+        }
+
+        // write file
         await ensureDir(local_path_to_file);
         await fs.writeFile(local_path_to_file, data);
 
-        json_content.hashes[local_path_to_file] = await crypto.createHash('md5').update(data).digest('hex');
+        // update lock hash
+        json_content.hashes[local_path_to_file] = new_hash;
+        await fs.writeFile(json_file, JSON.stringify(json_content, null, 4), 'utf-8');
 
-        await fs.writeFile(json_file, JSON.stringify(json_content, null, 4), 'utf-8'); // should update lock file and add a key value pairs
-
-        console.log(`Added...  ${gray}${local_path_to_file}${green} ✓${default_color} Byte size: ${response.headers.get('content-length')}B`);
-
-        
+        console.log(`Added... ${gray}${local_path_to_file}${green} ✓${default_color} Byte size: ${response.headers.get('content-length')}B`);    
     }
     catch (error) {
         console.log(`\n\n${red}-- Error fetching --${default_color}\nReason:`);
@@ -200,18 +227,20 @@ exports.initiateUpdate = async (flag) => {
         console.log(`Current version: ${yellow}${currentVersion}${default_color}`);
         console.log(`New version: ${green}${data.version}${default_color}`);
         await delay(1000);
-        console.log("Files to update:\n");
-         files_to_update.forEach(arr => console.log(`${yellow}${arr[1]}${default_color}`));
-        await delay(1000);
-        console.log("\nApplying update...\n");
-        await delay(1000);
-
-        for (const arr of  files_to_update) {
-            await applyUpdate(arr, flag);
+        
+        if (files_to_update.length > 0) {
+            console.log("Files to update:\n");
+            await delay(1000);
+            files_to_update.forEach(arr => console.log(`${yellow}${arr[1]}${default_color}`));
+            console.log("\nApplying update...\n");
+            await delay(1000);
+            for (const arr of  files_to_update) {
+                await applyUpdate(arr, flag);
+            }
         }
 
-        if (files_to_add) {
-            console.log(`\nAdding new files...\n`);
+        if (files_to_add.length > 0) {
+            console.log(`\nFiles to add...\n`);
             files_to_add.forEach(file => console.log(`- ${file[1]}`));
             console.log();
             for (const files_arr of files_to_add) {

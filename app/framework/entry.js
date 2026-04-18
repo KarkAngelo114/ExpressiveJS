@@ -11,6 +11,7 @@ const { resetConfig, getVersion } = require('./ProjectInitiator/config');
 const { serve } = require('./serve_app/serveJS');
 const { initiateUpdate, checkUpdate } = require('./ProjectInitiator/updater');
 const { Setup } = require('./ProjectInitiator/setup');
+const { random } = require('./ProjectInitiator/random');
 
 exports.runCLI = async (args) => {
     const arg1 = args[0]?.toLowerCase();
@@ -32,6 +33,7 @@ exports.runCLI = async (args) => {
         "-v":"Get current version",
         "check-update":"Check for update",
         "update":"Update scaffolded modules",
+        "generate-secret":"generates a secret that you can use for your secret keys",
         "update --force":"Update all scaffolded modules without checking 'Updatable' exported property of every files. (Be cautious when using this flag especially if there are modifications on scaffolded files)"
     };
 
@@ -44,6 +46,9 @@ exports.runCLI = async (args) => {
     }
 
     switch (arg1) {
+        case "generate-secret":
+            random();
+            break;
         case "generate-model":
             if (!config['has-db']) {
                 console.log(`${color.yellow}[INFO]------- Cannot create a model file.${color.default_color}`);

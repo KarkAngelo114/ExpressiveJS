@@ -43,6 +43,11 @@ exports.resetConfig = async () => {
         config['has_Setup'] = false;
         await fs.writeFile(json, JSON.stringify(config, null, 4), 'utf-8');
 
+        // delete the lock file
+
+        const lock_file = path.join(__dirname, 'expressivejs-lock.json');
+        await fs.unlink(lock_file);
+
         console.log(`${color.yellow}[INFO]-------Configuration reset. ${color.default_color}`);
         process.exit(1);
     }
