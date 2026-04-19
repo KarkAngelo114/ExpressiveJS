@@ -43,11 +43,16 @@ exports.setAuth = async (req, authData) => {
  * @returns {Object} Authentication data
  */
 exports.getAuthData = async (req) => {
-   const req_data = req.session.authData; 
-   const excludedKeys = ["createdAt"]; // exclude keys that might not be needed
+    const req_data = req.session.authData;
+
+    if (!req_data) {
+        return {}
+    }
+
+    const excludedKeys = ["createdAt"]; // exclude keys that might not be needed
     return Object.fromEntries( 
         Object.entries(req_data).filter(([key]) => !excludedKeys.includes(key)) 
-    ); 
+    );
 }
 
 // destroy session. User is no longer authenticated anymore
