@@ -23,10 +23,8 @@ exports.configure = async (setup) => {
             ...pkg.scripts,
             "dev":"node expressivecli --serve",
             "start": "node App.js",
-            "dev": "nodemon App.js",
             "build": "npm install"
         };
-        pkg._note = "Please remove the (dev) attribute from the scripts section before deploying to production.";
 
         await fs.writeFile(packageJSON, JSON.stringify(pkg, null, 4), 'utf-8');
     }
