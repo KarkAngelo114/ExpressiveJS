@@ -4,25 +4,25 @@
 #### You may add more credentials, but ensure that they are properly loaded to you scripts
 
 # Environment type (change this to "prod" if on production environment and/or before deployment)
-ENVIRONMENT='local'
+ENVIRONMENT=local
 
 PORT=3001
-SERVERHOST = '0.0.0.0'
-CLIENT_APP_URL = 'http://localhost:3001'
+SERVERHOST=0.0.0.0
+CLIENT_APP_URL=http://localhost:3001
 
 # Keys
-API_KEY=''
-JWT_TOKEN=''
-PUBLIC_API_KEY=''
-SESSION_SECRET=''
+API_KEY=
+JWT_TOKEN=
+PUBLIC_API_KEY=
+SESSION_SECRET=
 
 #Cloudinary credentials
-CLOUDINARY_CLOUD_NAME=''
-CLOUDINARY_API_KEY=''
-CLOUDINARY_API_SECRET=''
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
 
-# to use the integrative AI module (go to: https://apifreellm.com/en to get your API key and put it here)
-INTEGRATIVE_AI_API_KEY=''
+# you can get yours at https://groq.com/
+INTEGRATIVE_AI_API_KEY=
 
 ## GMAIL CREDENTIALS
 ## For EMAIL_SENDER_PASSWORD, you need app password configured on your Google Account first. 

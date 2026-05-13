@@ -1,15 +1,18 @@
 // this is the pool connection file. This will be use across any database queries
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const mysql = require('mysql2/promise');
-
 let mysql_host = process.env.MYSQLHOST;
 let mysql_user = process.env.MYSQLUSER;
 let mysql_password = process.env.MYSQLPASSWORD;
 let mysql_database = process.env.MYSQLDATABASE;
 let mysql_port = Number(process.env.MYSQLPORT);
 let timeout = Number(process.env.CONNECTIONTIMEOUT);
+let ca_dir = path.join(__dirname, "ca.pem"); // ensure that it is in the same location as this pool.js
+let env = process.env.ENVIRONMENT;
 
-const db_conn = mysql.createPool({
+let dbConfig = {
     host: mysql_host,
     user: mysql_user,
     password: mysql_password,
@@ -17,6 +20,14 @@ const db_conn = mysql.createPool({
     port: mysql_port,
     multipleStatements: true,
     connectTimeout: timeout
-});
+};
+
+if (env === "prod") {
+    dbConfig.ssl = {
+        ca: fs.readFileSync(ca_dir)
+    };
+}
+
+const db_conn = mysql.createPool(dbConfig);
 
 module.exports = db_conn;

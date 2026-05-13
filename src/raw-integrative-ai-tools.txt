@@ -1,3 +1,6 @@
+const path = require('path');
+const fs = require('fs').promises;
+
 /**
  * 
  * @param {Array<Object>} data - array of objects containing key value pairs
@@ -13,4 +16,26 @@ exports.ObjectArrayToString = (data) => {
     
 
     return parsed.join('; \n');
+}
+
+/**
+ * 
+ * @param {String} filepath - loads a markdown file from a specified path 
+ */
+exports.loadMarkDownFile = async (filepath) => {
+
+    try {
+        if (!filepath) throw new Error('"filepath" is undefined. Ensure you have set your filepath');
+
+        const dir = process.cwd();
+
+        const markdownFilePath = path.join(dir, `${filepath}`);
+
+        const data = await fs.readFile(markdownFilePath, 'utf-8');
+
+        return data;
+    }
+    catch (e) {
+        console.error(e);
+    }
 }
