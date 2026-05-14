@@ -1,4 +1,4 @@
-const path = require('path');
+
 const fs = require('fs').promises;
 
 /**
@@ -22,20 +22,22 @@ exports.ObjectArrayToString = (data) => {
  * 
  * @param {String} filepath - loads a markdown file from a specified path 
  */
+
 exports.loadMarkDownFile = async (filepath) => {
-
     try {
-        if (!filepath) throw new Error('"filepath" is undefined. Ensure you have set your filepath');
+        if (!filepath) {
+            throw new Error('"filepath" is undefined.');
+        }
 
-        const dir = process.cwd();
+        const data = await fs.readFile(filepath,'utf-8');
 
-        const markdownFilePath = path.join(dir, `${filepath}`);
-
-        const data = await fs.readFile(markdownFilePath, 'utf-8');
+        console.log(`[INFO]------- Markdown file has been loaded from ${filepath}`);
 
         return data;
-    }
-    catch (e) {
+
+    } catch (e) {
+
         console.error(e);
+        throw e;
     }
 }
