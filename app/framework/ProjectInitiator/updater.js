@@ -305,14 +305,29 @@ exports.checkUpdate = async () => {
 
         console.log(`${yellow}\n----------------------- ${default_color} Below are the other details what to update ${yellow}----------------------- ${default_color}`)
         console.log(`\nFiles to update:`);
-        data[data.version].files_to_update.forEach(file => console.log(`- ${file[1]}`));
+        if (data[data.version].files_to_update || data[data.version].files_to_update.length > 0) {
+            data[data.version].files_to_update.forEach(file => console.log(`- ${file[1]}`));
+        }
+        else {
+            console.log("None...");
+        }
+        
         console.log(`\nFiles to add:`);
-        data[data.version].files_to_add.forEach(file => console.log(`- ${file[1]}`));
+        if (data[data.version].files_to_add || data[data.version].files_to_add.length > 0) {
+            data[data.version].files_to_add.forEach(file => console.log(`- ${file[1]}`));
+        }
+        else {
+            console.log("None...");
+        }
         
 
-        if (data.files_to_delete.length > 0) {
-            console.log(`\nFiles to delete:`);
+        console.log(`\nFiles to delete:`);
+        if (data.files_to_delete || data.files_to_delete.length > 0) {
+            
             data.files_to_delete.forEach(file => console.log(`- ${file}`));
+        }
+        else {
+            console.log("None...");
         }
         
         process.exit(0);
