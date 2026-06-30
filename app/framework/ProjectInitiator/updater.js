@@ -160,7 +160,7 @@ const applyUpdate = async (src, flag) => {
 
 /**
  * 
- * @param {String} filePath - local file path to delete 
+ * @param {String} filePath - local file path to delete. Example: `middlewares/<module_name>`
  */
 const deleteFile = async (filePath, json_content, json_file) => {
     try {
@@ -190,7 +190,7 @@ const deleteFile = async (filePath, json_content, json_file) => {
  */
 exports.initiateUpdate = async (flag) => {
     const json_file = path.join(__dirname, 'expressivejs-lock.json');
-    let content = JSON.parse(await fs.readFile(json_file, 'utf-8'));
+    let lock_file_content = JSON.parse(await fs.readFile(json_file, 'utf-8')); // we get the lock file content. The lockfile contains hashes of all scaffolded modules and newly added modules
     try {
         
         /**
@@ -212,12 +212,11 @@ exports.initiateUpdate = async (flag) => {
 
         console.log(`${green} ✓ ${gray}[GET] ${baseUrl}/metadata.json ${default_color}`);
 
-        const data = await response.json();
-        const versionKey = data.version;
-        const versionData = data[versionKey];
+        
+        const data = await response.json(); // parse the JSON data
+        const allVersions = data.all_versions; // contains versions like ["1.0.2", "1.0.3", "1.0.4", "1.0.5", "1.0.6"]
+        const getIndexedVersion = allVersions.indexOf(currentVersion); // we get the index of the current client version to index it from the array of all versions. This way, we can apply updates sequentially, no matter how many times the client version is fall behind the updates.
 
-        const files_to_update = versionData.files_to_update || []; // using the latest version as key, we get the array of files to update
-        const files_to_add = versionData.files_to_add || []; // using the latest version as key, we get the array of files to be added
 
         if (currentVersion === data.version) {
             console.log(`Everything is up to date`);
@@ -226,45 +225,61 @@ exports.initiateUpdate = async (flag) => {
 
         console.log(`Current version: ${yellow}${currentVersion}${default_color}`);
         console.log(`New version: ${green}${data.version}${default_color}`);
-        await delay(1000);
+
+        // slice the `all_versions` array so that it will start from the current indexed version + 1. 
+        // Ex: current version is 1.0.3, in the all_versions array, it is indexed as 1. 
+        // Then we +1 so that slicing will start at index 2 (originally, index 2 is 1.0.4) so that the new array will be ["1.0.4", "1.0.5", "1.0.6"]
+        // Then we loop through the new array, this will get the updates from all of the versions it missed, rather than immediately updating to the latest
+        // which can cause dependency conflicts, like missing file from previous version causes an error for a module that exists on the later versions.
+        const versionUpdatePath = getIndexedVersion == -1 ? allVersions : allVersions.slice(getIndexedVersion + 1); 
         
-        if (files_to_update.length > 0) {
-            console.log("Files to update:\n");
-            await delay(1000);
-            files_to_update.forEach(arr => console.log(`${yellow}${arr[1]}${default_color}`));
-            console.log("\nApplying update...\n");
-            await delay(1000);
-            for (const arr of  files_to_update) {
-                await applyUpdate(arr, flag);
+        console.log(`\nPreparing to apply updates sequentially: ${versionUpdatePath.join(' -> ')}\n`);
+
+        for (const version of versionUpdatePath) {
+            const versionData = data[version];
+            if (!versionData) continue; // Skip if metadata block for this version is missing
+
+            console.log(`${yellow}--- Applying Version ${version} ---${default_color}`);
+
+            const files_to_update = versionData.files_to_update || [];
+            const files_to_add = versionData.files_to_add || [];
+            const files_to_delete = versionData.files_to_delete || [];
+            const dependency_update = versionData.dependency_update || [];
+            const no_db_dependency_update = versionData.no_db_dependency_update || [];
+
+            // 1. Process Updates
+            if (files_to_update.length > 0) {
+                for (const arr of files_to_update) {
+                    await applyUpdate(arr, flag);
+                }
             }
+
+            // 2. Process Additions
+            if (files_to_add.length > 0) {
+                for (const files_arr of files_to_add) {
+                    await add_files(files_arr, has_db, lock_file_content, json_file);
+                }
+            }
+
+            // 3. Process Deletions
+            if (files_to_delete.length > 0) {
+                for (const file_path of files_to_delete) {
+                    await deleteFile(file_path, lock_file_content, json_file);
+                }
+            }
+
+            // 4. Process Dependencies
+            if (dependency_update.length > 0 || no_db_dependency_update.length > 0) {
+                console.log(`Updating dependencies for ${version}...`);
+                const deps = has_db ? dependency_update : no_db_dependency_update;
+                await uninstall(deps);
+                await install(deps);
+            }
+
+            // update versions
+            await updateVersion(version);
         }
 
-        if (files_to_add.length > 0) {
-            console.log(`\nFiles to add...\n`);
-            files_to_add.forEach(file => console.log(`- ${file[1]}`));
-            console.log();
-            for (const files_arr of files_to_add) {
-                await add_files(files_arr, has_db, content, json_file);
-            }
-        }
-
-        if (data.files_to_delete.length > 0) {
-            console.log(`\nDeleting files...`);
-            for (const file_path of data.files_to_delete) {
-                await deleteFile(file_path, content, json_file);
-            }
-        }
-
-        if (data.dependency_update.length > 0 || data.no_db_dependency_update.length > 0) {
-            console.log(`Updating dependencies...`);
-            const deps = has_db ? data.dependency_update : data.no_db_dependency_update;
-            await uninstall(deps);
-            await install(deps);
-        }
-        
-        // save local version
-        await updateVersion(data.version);
-        await delay(2000);
         console.log(`${green} ✓ ${default_color}Update complete...\n`);
         await getVersion();
         process.exit(0);
@@ -328,6 +343,15 @@ exports.checkUpdate = async () => {
         }
         else {
             console.log("None...");
+        }
+
+        const allversions = data.all_versions;
+        const currentIndexedVersion = allversions.indexOf(currentVersion);
+        const updatePath = currentIndexedVersion == -1 ? allversions : allversions.slice(currentIndexedVersion + 1);
+
+        // this is to notify that the current version is N update/s behind
+        if (updatePath.length > 1) {
+            console.log(`${yellow}[Note]------- You are ${updatePath.length} update/s behind. To update, run: ${gray}node expressivecli update${default_color}`);
         }
         
         process.exit(0);

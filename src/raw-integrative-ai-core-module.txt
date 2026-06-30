@@ -15,7 +15,7 @@ class Integrative_AI {
         this.history_context = [];
         this.history_context_length = 5;
         this.save_history = false;
-        this.nodel = "llama-3.1-8b-instant"
+        this.model = "llama-3.1-8b-instant"
     }
 
     /**
@@ -99,7 +99,7 @@ class Integrative_AI {
                     "Authorization": `Bearer ${this.apiKey}`
                 },
                 body: JSON.stringify({
-                    model: this.nodel,
+                    model: this.model,
                     messages: [
                         {
                             role: "system",

@@ -1,14 +1,20 @@
-{
+{   
     "version":"1.0.4",
-    "files_to_delete": [],
-    "dependencies":[],
+    "all_versions":[
+        "1.0.2",
+        "1.0.3",
+        "1.0.4"
+    ],
     "1.0.4":{
         "files_to_update":[
             ["raw-integrative-ai-index.txt", "applications/integrative-ai/index.js"],
             ["raw-integrative-ai-core-module.txt", "applications/integrative-ai/main/core.js"],
             ["raw-integrative-ai-tools.txt", "applications/integrative-ai/tools/index.js"]
         ],
-        "files_to_add": []
+        "files_to_add": [],
+        "dependency_update":[],
+        "no_db_dependency_update":[],
+        "files_to_delete": []
     },
     "1.0.3": {
         "files_to_update":[
@@ -18,6 +24,10 @@
         "files_to_add":[
             ["rawAuth.txt", "middlewares/auth.js"]
         ]
+        ,
+        "dependency_update":[],
+        "no_db_dependency_update":[],
+        "files_to_delete": []
     },
     "1.0.2": {
         "files_to_update":[
@@ -35,8 +45,9 @@
             ["raw-request-event-handler.txt", "middlewares/request-event-handler.js"],
             ["raw-cors.txt", "middlewares/cors.js"],
             ["rawhttp.txt","applications/http.js"]
-        ]
-    },
-    "dependency_update":[],
-    "no_db_dependency_update":[]
+        ],
+        "dependency_update":[],
+        "no_db_dependency_update":[],
+        "files_to_delete": []
+    }
 }
