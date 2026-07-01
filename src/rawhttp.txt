@@ -1,7 +1,5 @@
 // applications/http.js
-
-
-
+// The http module is use to make request using native fetch API for seamless flow of making request.
 
 const request = async (method, url, { body = null, headers = {}, timeout = 5000 }) => {
     try {
@@ -35,7 +33,7 @@ const request = async (method, url, { body = null, headers = {}, timeout = 5000 
 
         return {
             StatusCode: response.status,
-            data,
+            data: data,
             message: response.ok ? "OK" : "Request failed"
         };
 
@@ -48,9 +46,36 @@ const request = async (method, url, { body = null, headers = {}, timeout = 5000 
     }
 };
 
+/**
+ * 
+ * @param {String} url url link 
+ * @param {OBject} headers header configs
+ * @returns {{StatusCode: Number, data: any, message: String}}
+ */
 exports.useGet = (url, headers) => request("GET", url, { headers });
-exports.usePost = (url, body, headers) => request("POST", url, { body, headers });
-exports.usePut = (url, body, headers) => request("PUT", url, { body, headers });
-exports.useDelete = (url, headers) => request("DELETE", url, { headers });
 
-// The http module is use to make request using native fetch API for seamless flow of making request.
+/**
+ * 
+ * @param {String} url url link to third party application or server
+ * @param {Object} body payload to be send for making request
+ * @param {OBject} headers header configs
+ * @returns {{StatusCode: Number, data: any, message: String}}
+ */
+exports.usePost = (url, body, headers) => request("POST", url, { body, headers });
+
+/**
+ * 
+ * @param {String} url url link to third party application or server
+ * @param {Object} body payload to be send for making request
+ * @param {OBject} headers header configs
+ * @returns {{StatusCode: Number, data: any, message: String}}
+ */
+exports.usePut = (url, body, headers) => request("PUT", url, { body, headers });
+
+/**
+ * 
+ * @param {String} url url link 
+ * @param {OBject} headers header configs
+ * @returns {{StatusCode: Number, data: any, message: String}}
+ */
+exports.useDelete = (url, headers) => request("DELETE", url, { headers });
