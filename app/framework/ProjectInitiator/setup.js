@@ -6,7 +6,19 @@ const config = require('./config.json');
 const { createFolders } = require("./createFolders");
 const { createFiles } = require("./fileCreator");
 
-let baseUrl = "https://raw.githubusercontent.com/KarkAngelo114/ExpressiveJS/main";
+async function getLatestCommitHash() {
+    try {
+        const response = await fetch('https://api.github.com/repos/KarkAngelo114/ExpressiveJS/commits/main', {
+            headers: { 'User-Agent': 'ExpressiveJS-CLI' } // GitHub API requires a User-Agent header
+        });
+        if (!response.ok) return 'main'; // Fallback to 'main' if the API fails
+        
+        const data = await response.json();
+        return data.sha.substring(0, 7); // Returns the short 7-character commit hash
+    } catch (e) {
+        return 'main'; // Fallback
+    }
+}
 
 
 /**
@@ -16,6 +28,9 @@ let baseUrl = "https://raw.githubusercontent.com/KarkAngelo114/ExpressiveJS/main
  */
 exports.Setup = async (flag1, flag2) => {
     try {
+        const hash = await getLatestCommitHash();
+        let baseUrl = `https://cdn.jsdelivr.net/gh/KarkAngelo114/ExpressiveJS@${hash}`;
+
         const { input, rl } = require("./cli");
         const isAlreadtSetup = config['has_Setup'];
 
@@ -44,7 +59,7 @@ exports.Setup = async (flag1, flag2) => {
 
         console.log("Scaffolding project folder structure...");
         createFolders(folders);
-        await delay(2500);
+        await delay(5000);
         
         console.log("Creating flles...");
         await createFiles(`${baseUrl}/src`,files, flag2 === "postgre" ? "postgre" : null);
@@ -52,7 +67,7 @@ exports.Setup = async (flag1, flag2) => {
 
         console.log('Installing Dependencies...');
         await install(dependencies);
-        await delay(2500);
+        await delay(5000);
 
         if (flag1 !== "--no-db") {
             console.log("Setting database...");
