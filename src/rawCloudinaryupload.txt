@@ -19,9 +19,9 @@ cloudinary.config({
 /**
  * @async
  * @function cloudinaryUpload
- * @param {any} filePath - file to upload
- * @param {String} folder - target folder in your cloudinary
- * @returns {Object} - returns the following: url of the uploaded file, public_id and provider name (cloudinary) - if the upload is success, otherwise, the file will be save locally on "uploads" folder
+ * @param {string} filePath - file to upload
+ * @param {string} folder - target folder in your cloudinary
+ * @returns {{success: boolean, url: string, provider: string, public_id: string}} - returns the following: url of the uploaded file, public_id and provider name (cloudinary) - if the upload is success, otherwise, the file will be save locally on "uploads" folder
  *
  * cloudinaryUpload() allows you to upload files to your cloudinary. Ensure that you have set up your cloudinary account and save your credentials on your .env file
  *
@@ -156,32 +156,70 @@ const cloudinaryListFolder = async (folder = 'fallback') => {
  * 
  */
 const cloudinaryDeleteByUrl = async (url) => {
-    const public_id = getPublicIdFromCloudinaryUrl(url);
-    if (!public_id) {
-        return { success: false, error: 'Invalid Cloudinary URL' };
+    const asset = getCloudinaryAssetInfoFromUrl(url);
+
+    if (!asset) {
+        return {
+            success: false,
+            error: 'Invalid Cloudinary URL'
+        };
     }
 
     try {
-        const result = await cloudinary.uploader.destroy(public_id);
+        const result = await cloudinary.uploader.destroy(
+            asset.public_id,
+            {
+                resource_type: asset.resource_type,
+                type: asset.type,
+            }
+        );
+
         return {
+            success: result.result === 'ok',
             statusCode: result.result === 'ok' ? 200 : 400,
             provider: 'cloudinary',
-            result: result
+            public_id: asset.public_id,
+            resource_type: asset.resource_type,
+            result
         };
     } catch (error) {
-        return { success: false, error: error.message };
+        console.error('[Cloudinary Delete Error]', error);
+
+        return {
+            success: false,
+            error: error.message
+        };
     }
 };
 
+const getCloudinaryAssetInfoFromUrl = (url) => {
+    try {
+        const parsedUrl = new URL(url);
 
-const getPublicIdFromCloudinaryUrl = (url) => {
-    const parts = url.split('/upload/');
-    if (parts.length !== 2) return null;
+        const match = parsedUrl.pathname.match(
+            /\/(image|video|raw)\/(upload|private|authenticated)\/(.+)/
+        );
 
-    const pathPart = parts[1].replace(/^v\d+\//, ''); // remove version
-    const withoutExt = pathPart.replace(/\.[^/.]+$/, ''); // remove extension
+        if (!match) return null;
 
-    return withoutExt; // includes folder
+        const [ resource_type, type, remainder] = match;
+
+        let public_id = remainder;
+
+        // Remove version
+        public_id = public_id.replace(/^v\d+\//, '');
+        if (resource_type !== 'raw') {
+            public_id = public_id.replace(/\.[^/.]+$/, '');
+        }
+
+        return {
+            public_id: public_id,
+            resource_type: resource_type,
+            type: type
+        };
+    } catch {
+        return null;
+    }
 };
 
 
