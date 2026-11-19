@@ -1,14 +1,13 @@
 const { spawn } = require('child_process');
 const color_code = require('../colorCode/ANSI');
 
-function installDependencies(deps, isDev = false) {
+function installDependencies(deps) {
     return new Promise((resolve, reject) => {
         if (!Array.isArray(deps)) {
             return reject(new Error('Dependencies must be an array'));
         }
 
         const args = ['install', ...deps];
-        if (isDev) args.push('--save-dev');
 
         const child = spawn('npm', args, { stdio: 'inherit', shell:true });
 
@@ -24,14 +23,13 @@ function installDependencies(deps, isDev = false) {
     });
 }
 
-function uninstallDependencies(deps, isDev = false) {
+function uninstallDependencies(deps) {
     return new Promise((resolve, reject) => {
         if (!Array.isArray(deps)) {
             return reject(new Error('Dependencies must be an array'));
         }
 
         const args = ['uninstall', ...deps];
-        if (isDev) args.push('--save-dev');
 
         const child = spawn('npm', args, { stdio: 'inherit', shell:true });
 
@@ -57,7 +55,6 @@ exports.install = async (deps) => {
         deps.forEach(d => console.log(d));
         console.log();
         await installDependencies(deps);
-        await installDependencies(['nodemon'], true);
     } catch (err) {
         console.error(err);
         process.exit(1);

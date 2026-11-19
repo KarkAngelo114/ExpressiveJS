@@ -3,6 +3,7 @@
 # v1.0.4
 ### Changes and Updates
 - the core integrative AI Endpoint wrapper module now uses Groq services. Changed from using `Apifreellm` to `Groq`. API key to use must be obtain from `https://groq.com/`. If your app still relies on Apifreellm after this update, ensure you change your keys.
+- removed nodemon as a dev dependency and related source files.
 
 
 # v1.0.3
