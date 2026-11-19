@@ -1,10 +1,16 @@
 {   
-    "version":"1.0.4",
+    "version":"1.0.5",
     "all_versions":[
         "1.0.2",
         "1.0.3",
-        "1.0.4"
+        "1.0.4",
+        "1.0.5"
     ],
+    "1.0.5": {
+        "files_to_update": [
+            ["rawCloudinaryupload.txt", "applications/cloudinaryUpload.js"]
+        ]
+    },
     "1.0.4":{
         "files_to_update":[
             ["raw-integrative-ai-index.txt", "applications/integrative-ai/index.js"],
