@@ -1,9 +1,9 @@
 const color_code = require('../colorCode/ANSI');
-const startServer = require("./dev");
-require('dotenv').config();
+const { startServer } = require("./dev");
+
 
 exports.serve = () => {
-    
+    require('dotenv').config();
     process.stdout.write('\u001b[3J\u001b[2J\u001b[1J');
     console.clear();
     let port = Number(process.env.PORT);
